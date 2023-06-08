@@ -61,6 +61,9 @@ public:
         gun_rect->w = 105;
         gun_rect->h = 105;
 
+        shooting = false;
+        can_shoot = true;
+
         printf("Player Has Created...\n");
     }
 
@@ -78,6 +81,10 @@ public:
         surface = IMG_Load("data/guns-spritesheet.png");
         gun_texture = SDL_CreateTextureFromSurface(renderer, surface);
         SDL_FreeSurface(surface);
+    }
+
+    void ChangeGun() {
+        
     }
 
     void Update(SDL_Keycode key_dn, SDL_Keycode key_up) {
@@ -99,6 +106,8 @@ public:
 
     float dx, dy;
     bool shooting, can_shoot;
+
+    Uint8 gun_time_shoot, gun_shot_speed;
 
 private:
     SDL_Texture* texture;

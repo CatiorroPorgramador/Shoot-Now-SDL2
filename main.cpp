@@ -6,7 +6,6 @@
 void Shoot(std::vector<Shot*> *shots, SDL_Rect* reference) {
     Shot* ns = new Shot(reference->x+80, reference->y+45);
     shots->push_back(ns);
-    printf("New Shot\n");
 }
 
 int main(int argc, char** argv){
@@ -19,7 +18,9 @@ int main(int argc, char** argv){
     // Others...
     SDL_Keycode action_down, action_up;
 
-    Uint8 timer_spawner;
+    Uint8 timer_spawner, timer_shoot;
+    timer_spawner = 0;
+    timer_shoot = 0;
 
     // Groups
     std::vector<Zombie*> zombies;
@@ -57,7 +58,8 @@ int main(int argc, char** argv){
                         player->dy = 2;
                         break;
                     case SDLK_SPACE:
-                        Shoot(&shots, player->rect);
+                        if (!player->shooting) timer_shoot = 40;
+                        player->shooting = true;
                         break;
                     default:
                         break;
@@ -71,6 +73,9 @@ int main(int argc, char** argv){
                         player->dx = 0;
                     if (action_up == SDLK_s || action_up == SDLK_w)
                         player->dy = 0;
+                    
+                    if (action_up == SDLK_SPACE)
+                        player->shooting = false;
                     break;
 
                 default:
@@ -81,7 +86,16 @@ int main(int argc, char** argv){
         // Update
         timer_spawner++;
 
+        // Player
         player->Update(action_down, action_up);
+
+        if (timer_shoot > 40) {
+            Shoot(&shots, player->rect);
+            timer_shoot = 0;
+        }
+
+        if (player->shooting)
+            timer_shoot++;
 
         for (int i{0}; i < zombies.size(); ++i) {
             zombies[i]->Update();
