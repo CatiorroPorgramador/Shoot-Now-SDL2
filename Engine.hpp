@@ -52,8 +52,8 @@ public:
         rect = new SDL_Rect();
         rect->x = 0;
         rect->x = 0;
-        rect->w = 60;
-        rect->h = 60;
+        rect->w = 16*4;
+        rect->h = 16*4;
 
         gun_rect = new SDL_Rect();
         gun_rect->x = 0;
@@ -89,7 +89,7 @@ public:
 
     void Update(SDL_Keycode key_dn, SDL_Keycode key_up) {
         this->gun_rect->x = this->rect->x + 10;
-        this->gun_rect->y = this->rect->y - 4;
+        this->gun_rect->y = this->rect->y - 15;
 
         // Movements
         this->rect->x += dx;

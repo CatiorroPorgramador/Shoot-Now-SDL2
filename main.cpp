@@ -4,7 +4,7 @@
 #define SCREEN_HEIGHT 580
 
 void Shoot(std::vector<Shot*> *shots, SDL_Rect* reference) {
-    Shot* ns = new Shot(reference->x+80, reference->y+45);
+    Shot* ns = new Shot(reference->x+80, reference->y+35);
     shots->push_back(ns);
 }
 
@@ -89,7 +89,7 @@ int main(int argc, char** argv){
         // Player
         player->Update(action_down, action_up);
 
-        if (timer_shoot > 40) {
+        if (timer_shoot > 8) {
             Shoot(&shots, player->rect);
             timer_shoot = 0;
         }
