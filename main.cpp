@@ -15,6 +15,8 @@ int main(int argc, char** argv){
     SDL_Window* window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     
+    SDL_SetWindowResizable(window, SDL_TRUE);
+
     // Others...
     SDL_Keycode action_down, action_up;
 

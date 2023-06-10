@@ -2,6 +2,7 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
+#include <SDL2/SDL_ttf.h>
 #include <stdio.h>
 #include <vector>
 #include <algorithm>
@@ -25,18 +26,24 @@ public:
 class Zombie {
 public:
     Zombie() {
-        alive = true;
-
         rect = new SDL_Rect();
         rect->x = 740;
-        rect->y = (rand()%520);
-        rect->w = 60;
-        rect->h = 60;
+        rect->y = (rand()%490);
+        rect->w = 90;
+        rect->h = 90;
+
+        sheet_rect = new SDL_Rect {0, 0, 16, 16};
+
+        frame = 0;
+        index_frame = 0;
+
+        alive = true;
     }
 
     ~Zombie() {
         SDL_DestroyTexture(texture);
         delete rect;
+        delete sheet_rect;
     }
 
     void LoadTexture(SDL_Renderer* renderer) {
@@ -47,40 +54,47 @@ public:
 
     void Update() {
         this->rect->x -= 1;
+
+        index_frame++;
+        if (frame > 8) {
+            frame = 0;
+            sheet_rect->x = 0;
+            index_frame = 0;
+        }
+        else if (index_frame > 10) {
+            frame++;
+            sheet_rect->x += 16;
+            index_frame = 0;
+        }
+
+        if (rect->x < -rect->w)
+            alive = false;
     }
 
     void Render(SDL_Renderer* renderer) {
-        SDL_RenderCopy(renderer, texture, NULL, rect);
+        SDL_RenderCopy(renderer, texture, sheet_rect, rect);
     }
 
     SDL_Rect* rect;
+    SDL_Rect* sheet_rect;
 
     bool alive;
 
 protected:
+    Uint8 frame, index_frame;
     SDL_Texture* texture;
 };
 
 class Player {
 public:
     Player() {
-        rect = new SDL_Rect();
-        rect->x = 0;
-        rect->x = 0;
-        rect->w = 16*4;
-        rect->h = 16*4;
+        rect = new SDL_Rect {0, 0, 16*4, 16*4};
 
-        gun_rect = new SDL_Rect();
-        gun_rect->x = 0;
-        gun_rect->x = 0;
-        gun_rect->w = 105;
-        gun_rect->h = 105;
+        sheet_rect = new SDL_Rect {0, 0, 16, 16};
 
-        gun_sheet_rect = new SDL_Rect();
-        gun_sheet_rect->x = 0;
-        gun_sheet_rect->y = 0;
-        gun_sheet_rect->w = 32;
-        gun_sheet_rect->h = 32;
+        gun_rect = new SDL_Rect {0, 0, 105, 105};
+
+        gun_sheet_rect = new SDL_Rect {0, 0, 32, 32};
 
         speed = 3;
 
@@ -94,7 +108,10 @@ public:
         SDL_DestroyTexture(texture);
         SDL_DestroyTexture(gun_texture);
         delete rect;
+        delete sheet_rect;
+
         delete gun_rect;
+        delete gun_sheet_rect;
 
         printf("Player Has Deleted...\n");
     }
@@ -126,11 +143,13 @@ public:
     }
 
     void Render(SDL_Renderer* renderer) {
-        SDL_RenderCopy(renderer, texture, NULL, rect);
+        SDL_RenderCopy(renderer, texture, sheet_rect, rect);
         SDL_RenderCopy(renderer, gun_texture, gun_sheet_rect, gun_rect);
     }
 
     SDL_Rect* rect;
+    SDL_Rect* sheet_rect;
+
     SDL_Rect* gun_rect;
     SDL_Rect* gun_sheet_rect;
 
@@ -149,12 +168,7 @@ public:
     Shot(int x, int y) {
         speed = 15;
 
-        rect = new SDL_Rect();
-
-        rect->x = x;
-        rect->y = y;
-        rect->w = 8;
-        rect->h = 4;
+        rect = new SDL_Rect {x, y, 8, 4};
 
         alive = true;
     }
