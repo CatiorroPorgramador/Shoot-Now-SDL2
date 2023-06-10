@@ -4,13 +4,13 @@
 #define SCREEN_HEIGHT 580
 
 void Shoot(std::vector<Shot*> *shots, SDL_Rect* reference) {
-    Shot* ns = new Shot(reference->x+80, reference->y+35);
+    Shot* ns = new Shot(reference->x+80, reference->y+34);
     shots->push_back(ns);
 }
 
 int main(int argc, char** argv){
     // Window
-    char* title = "SHOOT NOW SDL VERSION";
+    const char* title = "SHOOT NOW SDL VERSION";
 
     SDL_Window* window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
@@ -26,9 +26,15 @@ int main(int argc, char** argv){
     std::vector<Zombie*> zombies;
     std::vector<Shot*> shots;
 
+    // Guns
+    Gun m4("M4", 30, 8, 18, 0);
+    Gun ak47("Ak-47", 30, 7, 19, 1);
+    Gun glock("Glock", 17, 20, 15, 4);
+
     // Objects
     Player *player = new Player();
     player->LoadTexture(renderer);
+
 
     bool running = true;
     while(running){
@@ -46,20 +52,26 @@ int main(int argc, char** argv){
                     switch (action_down)
                     {
                     case SDLK_a:
-                        player->dx = -2;
+                        player->dx = -player->speed;
                         break;
                     case SDLK_d:
-                        player->dx = 2;
+                        player->dx = player->speed;
                         break;
                     case SDLK_w:
-                        player->dy = -2;
+                        player->dy = -player->speed;
                         break;
                     case SDLK_s:
-                        player->dy = 2;
+                        player->dy = player->speed;
                         break;
                     case SDLK_SPACE:
                         if (!player->shooting) timer_shoot = 40;
                         player->shooting = true;
+                        break;
+                    case SDLK_1:
+                        player->ChangeGun(m4);
+                        break;
+                    case SDLK_2:
+                        player->ChangeGun(glock);
                         break;
                     default:
                         break;
