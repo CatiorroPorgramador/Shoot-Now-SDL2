@@ -3,8 +3,8 @@
 #define SCREEN_WIDTH 740
 #define SCREEN_HEIGHT 580
 
-void Shoot(std::vector<Shot*> *shots, SDL_Rect* reference, float speed) {
-    Shot* ns = new Shot(reference->x+80, reference->y+34);
+void Shoot(std::vector<Shot*> *shots, SDL_Rect* reference, float speed, Uint8 x, Uint8 y) {
+    Shot* ns = new Shot(reference->x+x, reference->y+y); // 80, 34
     ns->speed = speed;
     shots->push_back(ns);
 }
@@ -30,9 +30,10 @@ int main(int argc, char** argv){
     std::vector<Shot*> shots;
 
     // Guns
-    Gun m4("M4", 30, 8, 19, 0);
-    Gun ak47("Ak-47", 30, 7, 19, 1);
-    Gun glock("Glock", 17, 20, 15, 4);
+    Gun m4("M4", 30, 8, 19, 0, 84, 34);
+    Gun ak47("Ak-47", 30, 7, 19, 1, 84, 34);
+    Gun glock("Glock", 17, 60, 15, 2, 60, 34);
+    Gun rev_n("Revolver", 6, 60, 13, 3, 60, 34);
 
     // Objects
     Player *player = new Player();
@@ -67,14 +68,14 @@ int main(int argc, char** argv){
                         player->dy = player->speed;
                         break;
                     case SDLK_SPACE:
-                        if (!player->shooting) timer_shoot = 40;
+                        if (!player->shooting) timer_shoot = player->gun_time_shoot;
                         player->shooting = true;
                         break;
                     case SDLK_1:
                         player->ChangeGun(m4);
                         break;
                     case SDLK_2:
-                        player->ChangeGun(ak47);
+                        player->ChangeGun(glock);
                         break;
                     default:
                         break;
@@ -103,8 +104,8 @@ int main(int argc, char** argv){
         // Player
         player->Update(action_down, action_up);
 
-        if (timer_shoot > 8) {
-            Shoot(&shots, player->rect, player->gun_shot_speed);
+        if (timer_shoot > player->gun_time_shoot) {
+            Shoot(&shots, player->rect, player->gun_shot_speed, player->gun_x, player->gun_y);
             timer_shoot = 0;
         }
 

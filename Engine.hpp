@@ -10,15 +10,18 @@
 
 struct Gun {
 public:
-    Gun(const char* _name, Uint8 _max_bullets, Uint8 _delay_shoot, float _speed_shot, int _frame) {
+    Gun(const char* _name, Uint8 _max_bullets, Uint8 _delay_shoot, float _speed_shot, int _frame, Uint8 x, Uint8 y) {
         this->name = (char*) _name;
         this->delay_shoot = _delay_shoot;
         this->speed_shot = _speed_shot;
         this->frame = _frame;
+
+        this->x = x;
+        this->y = y;
     }
 
     char* name;
-    Uint8 max_bullets, delay_shoot, delay_index;
+    Uint8 max_bullets, delay_shoot, delay_index, x, y;
     int frame;
     float speed_shot;
 };
@@ -103,7 +106,6 @@ public:
 
         frame = 2;
 
-
         printf("Player Has Created...\n");
     }
 
@@ -135,6 +137,9 @@ public:
         gun_sheet_rect->x = 32*gun.frame;
         gun_time_shoot = gun.delay_shoot;
         gun_shot_speed = gun.speed_shot;
+
+        gun_x = gun.x;
+        gun_y = gun.y;
     }
 
     void Update(SDL_Keycode key_dn, SDL_Keycode key_up) {
@@ -155,7 +160,6 @@ public:
             index_frame = 0;
         }
         
-
         // Movements
         this->rect->x += dx;
         this->rect->y += dy;
@@ -179,7 +183,7 @@ public:
     float dx, dy, speed;
     bool shooting, can_shoot;
 
-    Uint8 gun_time_shoot, gun_shot_speed;
+    Uint8 gun_time_shoot, gun_shot_speed, gun_x, gun_y;
     bool in_movement;
 private:
 
