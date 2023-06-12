@@ -3,8 +3,9 @@
 #define SCREEN_WIDTH 740
 #define SCREEN_HEIGHT 580
 
-void Shoot(std::vector<Shot*> *shots, SDL_Rect* reference) {
+void Shoot(std::vector<Shot*> *shots, SDL_Rect* reference, float speed) {
     Shot* ns = new Shot(reference->x+80, reference->y+34);
+    ns->speed = speed;
     shots->push_back(ns);
 }
 
@@ -29,14 +30,14 @@ int main(int argc, char** argv){
     std::vector<Shot*> shots;
 
     // Guns
-    Gun m4("M4", 30, 8, 18, 0);
+    Gun m4("M4", 30, 8, 19, 0);
     Gun ak47("Ak-47", 30, 7, 19, 1);
     Gun glock("Glock", 17, 20, 15, 4);
 
     // Objects
     Player *player = new Player();
     player->LoadTexture(renderer);
-
+    player->ChangeGun(m4);
 
     bool running = true;
     while(running){
@@ -73,7 +74,7 @@ int main(int argc, char** argv){
                         player->ChangeGun(m4);
                         break;
                     case SDLK_2:
-                        player->ChangeGun(glock);
+                        player->ChangeGun(ak47);
                         break;
                     default:
                         break;
@@ -87,7 +88,6 @@ int main(int argc, char** argv){
                         player->dx = 0;
                     if (action_up == SDLK_s || action_up == SDLK_w)
                         player->dy = 0;
-                    
                     if (action_up == SDLK_SPACE)
                         player->shooting = false;
                     break;
@@ -104,7 +104,7 @@ int main(int argc, char** argv){
         player->Update(action_down, action_up);
 
         if (timer_shoot > 8) {
-            Shoot(&shots, player->rect);
+            Shoot(&shots, player->rect, player->gun_shot_speed);
             timer_shoot = 0;
         }
 
@@ -162,7 +162,8 @@ int main(int argc, char** argv){
         player->Render(renderer);
 
         // Debbuug
-        printf("Number of Zombies: %d\r", zombies.size());
+        //printf("Number of Zombies: %d\r", zombies.size());
+        printf("player.dx: %d\r", player->in_movement);
 
         SDL_RenderPresent(renderer);
         SDL_Delay(16.7);

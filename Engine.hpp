@@ -26,12 +26,7 @@ public:
 class Zombie {
 public:
     Zombie() {
-        rect = new SDL_Rect();
-        rect->x = 740;
-        rect->y = (rand()%490);
-        rect->w = 90;
-        rect->h = 90;
-
+        rect = new SDL_Rect {740, (rand()%490), 90, 90};
         sheet_rect = new SDL_Rect {0, 0, 16, 16};
 
         frame = 0;
@@ -56,14 +51,16 @@ public:
         this->rect->x -= 1;
 
         index_frame++;
+        
+        if (index_frame > 10) {
+            frame++;
+            sheet_rect->x += 16;
+            index_frame = 0;
+        }
+
         if (frame > 8) {
             frame = 0;
             sheet_rect->x = 0;
-            index_frame = 0;
-        }
-        else if (index_frame > 10) {
-            frame++;
-            sheet_rect->x += 16;
             index_frame = 0;
         }
 
@@ -101,6 +98,12 @@ public:
         shooting = false;
         can_shoot = true;
 
+        dx = 0;
+        dy = 0;
+
+        frame = 2;
+
+
         printf("Player Has Created...\n");
     }
 
@@ -124,6 +127,7 @@ public:
         // Gun
         surface = IMG_Load("data/guns-spritesheet.png");
         gun_texture = SDL_CreateTextureFromSurface(renderer, surface);
+
         SDL_FreeSurface(surface);
     }
 
@@ -134,9 +138,28 @@ public:
     }
 
     void Update(SDL_Keycode key_dn, SDL_Keycode key_up) {
+        anim_speed = (in_movement) ? 20 : 60;
+        anim_frame = (in_movement) ? 3 : 1;
+        
+        index_frame++;
+
+        if (index_frame > anim_speed) {
+            frame++;
+            sheet_rect->x += 16;
+            index_frame = 0;
+        }
+
+        if (frame > anim_frame) {
+            frame = anim_frame-1;
+            sheet_rect->x = frame*16;
+            index_frame = 0;
+        }
+        
+
         // Movements
         this->rect->x += dx;
         this->rect->y += dy;
+        in_movement = (dx != 0 || dy != 0) ? true : false;
 
         this->gun_rect->x = this->rect->x + 10;
         this->gun_rect->y = this->rect->y - 15;
@@ -157,8 +180,13 @@ public:
     bool shooting, can_shoot;
 
     Uint8 gun_time_shoot, gun_shot_speed;
-
+    bool in_movement;
 private:
+
+    int anim_speed, anim_frame;
+
+    Uint8 frame, index_frame;
+
     SDL_Texture* texture;
     SDL_Texture* gun_texture;
 };
