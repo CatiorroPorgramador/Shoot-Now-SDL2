@@ -30,15 +30,20 @@ int main(int argc, char** argv){
     std::vector<Shot*> shots;
 
     // Guns
+    Gun paw("Paw", -1, 30, 7, 5, 60, 34);
     Gun m4("M4", 30, 8, 19, 0, 84, 34);
     Gun ak47("Ak-47", 30, 7, 19, 1, 84, 34);
-    Gun glock("Glock", 17, 60, 15, 2, 60, 34);
+    Gun glock("Glock", 17, 40, 15, 2, 60, 34);
     Gun rev_n("Revolver", 6, 60, 13, 3, 60, 34);
+    Gun rev_c("Canela Seca", 6, 60, 12, 4, 60, 38);
+
+    Gun slot_1 = rev_c;
+    Gun slot_2 = m4;
 
     // Objects
     Player *player = new Player();
     player->LoadTexture(renderer);
-    player->ChangeGun(m4);
+    player->ChangeGun(slot_1);
 
     bool running = true;
     while(running){
@@ -72,10 +77,10 @@ int main(int argc, char** argv){
                         player->shooting = true;
                         break;
                     case SDLK_1:
-                        player->ChangeGun(m4);
+                        player->ChangeGun(slot_1);
                         break;
                     case SDLK_2:
-                        player->ChangeGun(glock);
+                        player->ChangeGun(slot_2);
                         break;
                     default:
                         break;

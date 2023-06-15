@@ -200,7 +200,7 @@ public:
     Shot(int x, int y) {
         speed = 15;
 
-        rect = new SDL_Rect {x, y, 8, 4};
+        rect = new SDL_Rect {x, y, 8, 2};
 
         alive = true;
     }
