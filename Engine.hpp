@@ -18,10 +18,27 @@ public:
 
         this->x = x;
         this->y = y;
+        this->w = 8;
+        this->h = 4;
     }
 
+    ~Gun() {
+        delete shoot;
+    }
+
+    void SetBulletSize(Uint8 w, Uint8 h) {
+        this->w = w;
+        this->h = h;
+    }
+
+    void SetBulletPosition() {
+
+    }
+
+    SDL_Rect* shoot;
+
     char* name;
-    Uint8 max_bullets, delay_shoot, delay_index, x, y;
+    Uint8 max_bullets, delay_shoot, delay_index, x, y, w, h;
     int frame;
     float speed_shot;
 };
@@ -104,6 +121,9 @@ public:
         dx = 0;
         dy = 0;
 
+        d_gun[0] = 0;
+        d_gun[1] = 0;
+
         frame = 2;
 
         printf("Player Has Created...\n");
@@ -117,6 +137,7 @@ public:
 
         delete gun_rect;
         delete gun_sheet_rect;
+        delete shoot_rect;
 
         printf("Player Has Deleted...\n");
     }
@@ -140,6 +161,8 @@ public:
 
         gun_x = gun.x;
         gun_y = gun.y;
+        gun_w = gun.w;
+        gun_h = gun.h;
     }
 
     void Update(SDL_Keycode key_dn, SDL_Keycode key_up) {
@@ -161,12 +184,12 @@ public:
         }
         
         // Movements
+        this->gun_rect->x = this->rect->x + gun_x;
+        this->gun_rect->y = this->rect->y - gun_y;
+
         this->rect->x += dx;
         this->rect->y += dy;
         in_movement = (dx != 0 || dy != 0) ? true : false;
-
-        this->gun_rect->x = this->rect->x + 10;
-        this->gun_rect->y = this->rect->y - 15;
     }
 
     void Render(SDL_Renderer* renderer) {
@@ -179,11 +202,12 @@ public:
 
     SDL_Rect* gun_rect;
     SDL_Rect* gun_sheet_rect;
+    SDL_Rect* shoot_rect;
 
-    float dx, dy, speed;
+    float dx, dy, speed, d_gun[2];
     bool shooting, can_shoot;
 
-    Uint8 gun_time_shoot, gun_shot_speed, gun_x, gun_y;
+    Uint8 gun_time_shoot, gun_shot_speed, gun_x, gun_y, gun_w, gun_h;
     bool in_movement;
 private:
 
@@ -197,10 +221,10 @@ private:
 
 class Shot {
 public:
-    Shot(int x, int y) {
+    Shot(int x, int y, int w, int h) {
         speed = 15;
 
-        rect = new SDL_Rect {x, y, 8, 2};
+        rect = new SDL_Rect {x, y, w, h};
 
         alive = true;
     }
