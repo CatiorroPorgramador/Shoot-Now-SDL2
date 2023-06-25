@@ -22,23 +22,18 @@ public:
         this->h = 4;
     }
 
-    ~Gun() {
-        delete shoot;
-    }
-
     void SetBulletSize(Uint8 w, Uint8 h) {
         this->w = w;
         this->h = h;
     }
 
-    void SetBulletPosition() {
-
+    void SetBulletPosition(int x, int y) {
+        this->point_x = x;
+        this->point_y = y;
     }
 
-    SDL_Rect* shoot;
-
     char* name;
-    Uint8 max_bullets, delay_shoot, delay_index, x, y, w, h;
+    Uint8 max_bullets, delay_shoot, delay_index, x, y, w, h, point_x, point_y; // Points are the shoots points start
     int frame;
     float speed_shot;
 };
@@ -113,6 +108,8 @@ public:
 
         gun_sheet_rect = new SDL_Rect {0, 0, 32, 32};
 
+        shot_rect = new SDL_Rect {0, 0, 0, 0};
+
         speed = 3;
 
         shooting = false;
@@ -137,7 +134,7 @@ public:
 
         delete gun_rect;
         delete gun_sheet_rect;
-        delete shoot_rect;
+        delete shot_rect;
 
         printf("Player Has Deleted...\n");
     }
@@ -159,10 +156,13 @@ public:
         gun_time_shoot = gun.delay_shoot;
         gun_shot_speed = gun.speed_shot;
 
-        gun_x = gun.x;
-        gun_y = gun.y;
-        gun_w = gun.w;
-        gun_h = gun.h;
+        shot_rect->x = gun.x;
+        shot_rect->y = gun.y;
+        shot_rect->w = gun.w;
+        shot_rect->h = gun.h;
+
+        this->point_x = gun.point_x;
+        this->point_y = gun.point_y;
     }
 
     void Update(SDL_Keycode key_dn, SDL_Keycode key_up) {
@@ -184,11 +184,12 @@ public:
         }
         
         // Movements
-        this->gun_rect->x = this->rect->x + gun_x;
-        this->gun_rect->y = this->rect->y - gun_y;
-
         this->rect->x += dx;
         this->rect->y += dy;
+
+        this->gun_rect->x = this->rect->x + shot_rect->x;
+        this->gun_rect->y = this->rect->y + shot_rect->y;
+
         in_movement = (dx != 0 || dy != 0) ? true : false;
     }
 
@@ -202,12 +203,12 @@ public:
 
     SDL_Rect* gun_rect;
     SDL_Rect* gun_sheet_rect;
-    SDL_Rect* shoot_rect;
+    SDL_Rect* shot_rect;
 
     float dx, dy, speed, d_gun[2];
     bool shooting, can_shoot;
 
-    Uint8 gun_time_shoot, gun_shot_speed, gun_x, gun_y, gun_w, gun_h;
+    Uint8 gun_time_shoot, gun_shot_speed, point_x, point_y;
     bool in_movement;
 private:
 
@@ -250,4 +251,15 @@ public:
     SDL_Rect* rect;
 private:
 
+};
+
+class Item {
+public:
+    Item() {
+
+    }
+
+    ~Item() {
+        
+    }
 };

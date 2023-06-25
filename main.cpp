@@ -3,8 +3,8 @@
 #define SCREEN_WIDTH 740
 #define SCREEN_HEIGHT 580
 
-void Shoot(std::vector<Shot*> *shots, SDL_Rect* reference, float speed, SDL_Rect* rect) {
-    Shot* ns = new Shot(reference->x+rect->x, reference->y+rect->y, rect->w, rect->y); // 80, 34
+void Shoot(std::vector<Shot*> *shots, float speed, SDL_Rect* rect, Uint8 point_x, Uint8 point_y, Uint8 w, Uint8 h) {
+    Shot* ns = new Shot(rect->x+point_x, rect->y+point_y, w, h); // 80, 34
     ns->speed = speed;
     shots->push_back(ns);
 }
@@ -30,22 +30,24 @@ int main(int argc, char** argv){
     std::vector<Shot*> shots;
 
     // Guns
-    Gun paw("Paw", -1, 30, 7, 5, 60, 34);
+    Gun paw("Paw", -1, 30, 7, 5, -40, -40);
     paw.SetBulletSize(30, 30);
-    Gun m4("M4", 30, 8, 23, 0, 84, 34);
+    Gun m4("M4", 30, 7, 23, 0, 40, 0);
     m4.SetBulletSize(8, 4);
-    m4.SetBulletPosition(80, 34);
-    Gun ak47("Ak-47", 30, 7, 23, 1, 84, 34);
+    m4.SetBulletPosition(70, 49);
+    Gun ak47("Ak-47", 30, 7, 23, 1, 20, 0);
     ak47.SetBulletSize(8, 4);
-    Gun glock("Glock", 17, 40, 15, 2, 60, 34);
+    ak47.SetBulletPosition(50, 49);
+    Gun glock("Glock", 17, 40, 15, 2, 10, 0);
     glock.SetBulletSize(5, 3);
-    Gun rev_n("Revolver", 6, 60, 13, 3, 60, 34);
+    glock.SetBulletPosition(60, 49);
+    Gun rev_n("Revolver", 6, 60, 13, 3, 10, 0);
     rev_n.SetBulletSize(6, 3);
-    Gun rev_c("Canela Seca", 6, 60, 16, 4, 60, 38);
+    Gun rev_c("Canela Seca", 6, 60, 16, 4, 10, 0);
     rev_c.SetBulletSize(5, 3);
 
     Gun slot_1 = m4;
-    Gun slot_2 = ak47;
+    Gun slot_2 = glock;
 
     // Objects
     Player *player = new Player();
@@ -117,7 +119,7 @@ int main(int argc, char** argv){
         player->Update(action_down, action_up);
 
         if (timer_shoot > player->gun_time_shoot) {
-            Shoot(&shots, player->rect, player->gun_shot_speed, player->shoot_rect);
+            Shoot(&shots, player->gun_shot_speed, player->rect, player->point_x, player->point_y, player->shot_rect->w, player->shot_rect->h);
             timer_shoot = 0;
         }
 
@@ -176,7 +178,7 @@ int main(int argc, char** argv){
 
         // Debbuug
         //printf("Number of Zombies: %d\r", zombies.size());
-        printf("player.dx: %d\r", player->in_movement);
+        printf("player.shot.x, y %d, %d\r", player->shot_rect->x, player->shot_rect->y);
 
         SDL_RenderPresent(renderer);
         SDL_Delay(16.7);
