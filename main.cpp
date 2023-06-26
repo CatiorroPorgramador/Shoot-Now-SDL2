@@ -34,7 +34,7 @@ int main(int argc, char** argv){
     paw.SetBulletSize(30, 30);
     Gun m4("M4", 30, 7, 23, 0, 40, 0);
     m4.SetBulletSize(8, 4);
-    m4.SetBulletPosition(70, 49);
+    m4.SetBulletPosition(80, 49);
     Gun ak47("Ak-47", 30, 7, 23, 1, 20, 0);
     ak47.SetBulletSize(8, 4);
     ak47.SetBulletPosition(50, 49);

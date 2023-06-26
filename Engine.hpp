@@ -256,10 +256,32 @@ private:
 class Item {
 public:
     Item() {
+        alive = true;
 
+        rect = new SDL_Rect {0, 0, 32, 32};
+        sheet_rect = new SDL_Rect {0, 0, 16, 16};
     }
 
     ~Item() {
-        
+        SDL_DestroyTexture(texture);
+
+        delete rect;
+        delete sheet_rect;
     }
+
+    void Update() {
+
+    }
+
+    void Render(SDL_Renderer* renderer) {
+        SDL_RenderCopy(renderer, texture, sheet_rect, rect);
+    }
+
+    bool alive;
+
+private:
+    SDL_Texture* texture;
+
+    SDL_Rect* rect;
+    SDL_Rect* sheet_rect;
 };
