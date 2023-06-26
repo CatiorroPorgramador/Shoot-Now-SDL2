@@ -18,16 +18,25 @@ int main(int argc, char** argv){
     
     SDL_SetWindowResizable(window, SDL_TRUE);
 
+    // GUI
+    TTF_Font* font = TTF_OpenFont("Sans.ttf", 24);
+    SDL_Color font_color = {255, 255, 255};
+    SDL_Rect* font_rect = new SDL_Rect {10, 10, 100, 100};
+
+    SDL_Surface* font_surface = TTF_RenderText_Solid(font, "Kills: ", font_color);
+
     // Others...
     SDL_Keycode action_down, action_up;
 
-    Uint8 timer_spawner, timer_shoot;
+    Uint8 timer_spawner, timer_items, timer_shoot;
     timer_spawner = 0;
     timer_shoot = 0;
+    timer_items = 0;
 
     // Groups
     std::vector<Zombie*> zombies;
     std::vector<Shot*> shots;
+    std::vector<Item*> items;
 
     // Guns
     Gun paw("Paw", -1, 30, 7, 5, -40, -40);
@@ -114,6 +123,7 @@ int main(int argc, char** argv){
 
         // Update
         timer_spawner++;
+        timer_items++;
 
         // Player
         player->Update(action_down, action_up);
@@ -123,8 +133,7 @@ int main(int argc, char** argv){
             timer_shoot = 0;
         }
 
-        if (player->shooting)
-            timer_shoot++;
+        if (player->shooting) timer_shoot++;
 
         for (int i{0}; i < zombies.size(); ++i) {
             zombies[i]->Update();
@@ -154,6 +163,20 @@ int main(int argc, char** argv){
             }
         }
 
+        for (int i{0}; i < items.size(); ++i) {
+            items[i]->Update();
+
+            if (SDL_HasIntersection(items[i]->rect, player->rect)) {
+                items[i]->alive = false;
+            }
+
+            if (!items[i]->alive) {
+                delete items[i];
+                items.erase(items.begin()+i);
+            }
+        }
+
+        // Timers
         if (timer_spawner >= 60) {
             Zombie* nz = new Zombie();
             nz->LoadTexture(renderer);
@@ -162,7 +185,15 @@ int main(int argc, char** argv){
             timer_spawner = 0;
         }
 
-        // Render Begin
+        if (timer_items >= 120) {
+            Item* item = new Item();
+            item->Load(renderer);
+            items.push_back(item);
+
+            timer_items = 0;
+        }
+
+        // Render
         SDL_SetRenderDrawColor(renderer, 10, 10, 10, 255);
         SDL_RenderClear(renderer);
 
@@ -174,10 +205,15 @@ int main(int argc, char** argv){
             sht->Render(renderer);
         }
 
+        for (auto itm : items) {
+            itm->Render(renderer);
+        }
+
         player->Render(renderer);
 
+        SDL_RenderCopy(renderer, SDL_CreateTextureFromSurface(renderer, font_surface), NULL, font_rect);
+
         // Debbuug
-        //printf("Number of Zombies: %d\r", zombies.size());
         printf("player.shot.x, y %d, %d\r", player->shot_rect->x, player->shot_rect->y);
 
         SDL_RenderPresent(renderer);
@@ -187,6 +223,9 @@ int main(int argc, char** argv){
     // Finish
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
+    SDL_FreeSurface(font_surface);
+    TTF_CloseFont(font);
+    delete font_rect;
     delete player;
 
     for (int i{0}; i < zombies.size(); ++i) {
@@ -199,6 +238,14 @@ int main(int argc, char** argv){
         printf("Deleting remaining Shots... number(%d/%d)\r", i+1, shots.size());
         delete shots[i];
     }
+    putchar('\n');
+
+    for (int i{0}; i < items.size(); ++i) {
+        printf("Deleting remaining items... number(%d/%d)\r", i+1, items.size());
+        delete items[i];
+    }
+
+    EndGame();
     
     return 0;
 }

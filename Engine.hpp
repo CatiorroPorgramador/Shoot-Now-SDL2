@@ -8,6 +8,9 @@
 #include <algorithm>
 #include <windows.h>
 
+SDL_Surface* zombie_surface = IMG_Load("data/enemy.png");
+SDL_Surface* item_surface = IMG_Load("data/items-spritesheet.png");
+
 struct Gun {
 public:
     Gun(const char* _name, Uint8 _max_bullets, Uint8 _delay_shoot, float _speed_shot, int _frame, Uint8 x, Uint8 y) {
@@ -57,9 +60,7 @@ public:
     }
 
     void LoadTexture(SDL_Renderer* renderer) {
-        SDL_Surface* surface = IMG_Load("data/enemy.png");
-        texture = SDL_CreateTextureFromSurface(renderer, surface);
-        SDL_FreeSurface(surface);
+        texture = SDL_CreateTextureFromSurface(renderer, zombie_surface);
     }
 
     void Update() {
@@ -257,9 +258,10 @@ class Item {
 public:
     Item() {
         alive = true;
+        frame = (rand()%3);
 
-        rect = new SDL_Rect {0, 0, 32, 32};
-        sheet_rect = new SDL_Rect {0, 0, 16, 16};
+        rect = new SDL_Rect {(rand()%692), -48, 48, 48};
+        sheet_rect = new SDL_Rect {frame*16, 0, 16, 16};
     }
 
     ~Item() {
@@ -269,8 +271,12 @@ public:
         delete sheet_rect;
     }
 
-    void Update() {
+    void Load(SDL_Renderer* renderer) {
+        texture = SDL_CreateTextureFromSurface(renderer, item_surface);
+    }
 
+    void Update() {
+        rect->y += 1;
     }
 
     void Render(SDL_Renderer* renderer) {
@@ -279,9 +285,16 @@ public:
 
     bool alive;
 
+    SDL_Rect* rect;
+
 private:
+    Uint8 frame;
     SDL_Texture* texture;
 
-    SDL_Rect* rect;
     SDL_Rect* sheet_rect;
 };
+
+void EndGame() {
+    SDL_FreeSurface(zombie_surface);
+    SDL_FreeSurface(item_surface);
+}
