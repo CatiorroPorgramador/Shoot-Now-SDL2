@@ -9,21 +9,28 @@ void Shoot(std::vector<Shot*> *shots, float speed, SDL_Rect* rect, Uint8 point_x
     shots->push_back(ns);
 }
 
+void UpdateGui() {
+
+}
+
 int main(int argc, char** argv){
     // Window
     const char* title = "SHOOT NOW SDL VERSION";
+
+    SDL_Surface* icon = IMG_Load("data/icon.png");
 
     SDL_Window* window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     
     SDL_SetWindowResizable(window, SDL_TRUE);
+    SDL_SetWindowIcon(window, icon);
+
+    SDL_FreeSurface(icon);
 
     // GUI
-    TTF_Font* font = TTF_OpenFont("Sans.ttf", 24);
-    SDL_Color font_color = {255, 255, 255};
-    SDL_Rect* font_rect = new SDL_Rect {10, 10, 100, 100};
+    TTF_Init();
 
-    SDL_Surface* font_surface = TTF_RenderText_Solid(font, "Kills: ", font_color);
+    GUI gui;
 
     // Others...
     SDL_Keycode action_down, action_up;
@@ -67,6 +74,7 @@ int main(int argc, char** argv){
     while(running){
         // Events
         SDL_Event event;
+
         while(SDL_PollEvent(&event)){
             switch(event.type){
                 case SDL_QUIT:
@@ -76,65 +84,58 @@ int main(int argc, char** argv){
                 case SDL_KEYDOWN:
                     action_down = event.key.keysym.sym;
 
-                    switch (action_down)
-                    {
-                    case SDLK_a:
-                        player->dx = -player->speed;
+                    switch (action_down) {
+                    case SDLK_a: player->dx = -player->speed;
                         break;
-                    case SDLK_d:
-                        player->dx = player->speed;
+                    case SDLK_d: player->dx = player->speed;
                         break;
-                    case SDLK_w:
-                        player->dy = -player->speed;
+                    case SDLK_w: player->dy = -player->speed;
                         break;
-                    case SDLK_s:
-                        player->dy = player->speed;
+                    case SDLK_s: player->dy = player->speed;
                         break;
                     case SDLK_SPACE:
                         if (!player->shooting) timer_shoot = player->gun_time_shoot;
                         player->shooting = true;
                         break;
-                    case SDLK_1:
-                        player->ChangeGun(slot_1);
+                    case SDLK_1: player->ChangeGun(slot_1);
                         break;
-                    case SDLK_2:
-                        player->ChangeGun(slot_2);
+                    case SDLK_2: player->ChangeGun(slot_2);
                         break;
                     default:
                         break;
                     }
-                    
                     break;
+
                 case SDL_KEYUP:
                     action_up = event.key.keysym.sym;
 
-                    if (action_up == SDLK_a || action_up == SDLK_d)
-                        player->dx = 0;
-                    if (action_up == SDLK_s || action_up == SDLK_w)
-                        player->dy = 0;
-                    if (action_up == SDLK_SPACE)
-                        player->shooting = false;
+                    if (action_up == SDLK_a || action_up == SDLK_d)     player->dx = 0;
+                    if (action_up == SDLK_s || action_up == SDLK_w)     player->dy = 0;
+                    if (action_up == SDLK_SPACE)                        player->shooting = false;
                     break;
-
                 default:
                     break;
             }
         }
 
-        // Update
+        /* Update */
+        gui.Update();
+
+        // Timers
         timer_spawner++;
         timer_items++;
 
         // Player
         player->Update(action_down, action_up);
 
+        if (player->shooting) timer_shoot++;
+
         if (timer_shoot > player->gun_time_shoot) {
             Shoot(&shots, player->gun_shot_speed, player->rect, player->point_x, player->point_y, player->shot_rect->w, player->shot_rect->h);
             timer_shoot = 0;
         }
 
-        if (player->shooting) timer_shoot++;
-
+        // Zombies
         for (int i{0}; i < zombies.size(); ++i) {
             zombies[i]->Update();
 
@@ -147,6 +148,7 @@ int main(int argc, char** argv){
             }
         }
 
+        // Shots
         for (int i{0}; i < shots.size(); ++i) {
             shots[i]->Update();
 
@@ -163,11 +165,14 @@ int main(int argc, char** argv){
             }
         }
 
+        // Items
         for (int i{0}; i < items.size(); ++i) {
             items[i]->Update();
 
             if (SDL_HasIntersection(items[i]->rect, player->rect)) {
                 items[i]->alive = false;
+                if (items[i]->frame == 0)
+                    gui.coins_val++;
             }
 
             if (!items[i]->alive) {
@@ -176,7 +181,7 @@ int main(int argc, char** argv){
             }
         }
 
-        // Timers
+        // Timers Conditional
         if (timer_spawner >= 60) {
             Zombie* nz = new Zombie();
             nz->LoadTexture(renderer);
@@ -193,7 +198,7 @@ int main(int argc, char** argv){
             timer_items = 0;
         }
 
-        // Render
+        /* Render */
         SDL_SetRenderDrawColor(renderer, 10, 10, 10, 255);
         SDL_RenderClear(renderer);
 
@@ -211,8 +216,8 @@ int main(int argc, char** argv){
 
         player->Render(renderer);
 
-        SDL_RenderCopy(renderer, SDL_CreateTextureFromSurface(renderer, font_surface), NULL, font_rect);
-
+        gui.Render(renderer);
+        
         // Debbuug
         printf("player.shot.x, y %d, %d\r", player->shot_rect->x, player->shot_rect->y);
 
@@ -223,9 +228,7 @@ int main(int argc, char** argv){
     // Finish
     SDL_DestroyWindow(window);
     SDL_DestroyRenderer(renderer);
-    SDL_FreeSurface(font_surface);
-    TTF_CloseFont(font);
-    delete font_rect;
+
     delete player;
 
     for (int i{0}; i < zombies.size(); ++i) {
@@ -244,6 +247,7 @@ int main(int argc, char** argv){
         printf("Deleting remaining items... number(%d/%d)\r", i+1, items.size());
         delete items[i];
     }
+    putchar('\n');
 
     EndGame();
     

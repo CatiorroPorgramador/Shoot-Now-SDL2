@@ -7,9 +7,40 @@
 #include <vector>
 #include <algorithm>
 #include <windows.h>
+#include <string>
 
 SDL_Surface* zombie_surface = IMG_Load("data/enemy.png");
 SDL_Surface* item_surface = IMG_Load("data/items-spritesheet.png");
+
+struct Text {
+public:
+    Text(std::string text, uint_fast16_t x, uint_fast16_t y) {
+        t = text;
+        
+        r.x = x;
+        r.y = y;
+    }
+
+    ~Text() {
+        SDL_FreeSurface(s);
+    }
+
+    void SetText(std::string text) {
+        t = text;
+    }
+
+    void Render(TTF_Font* font, SDL_Renderer* renderer) {
+        s = TTF_RenderText_Solid(font, t.c_str(), {255, 255, 255});
+        TTF_SizeText(font, t.c_str(), &r.w, &r.h);
+
+        SDL_RenderCopy(renderer, SDL_CreateTextureFromSurface(renderer, s), nullptr, &r);
+    }
+
+private:
+    SDL_Surface* s;
+    SDL_Rect r;
+    std::string t;
+};
 
 struct Gun {
 public:
@@ -286,12 +317,38 @@ public:
     bool alive;
 
     SDL_Rect* rect;
+    Uint8 frame;
 
 private:
-    Uint8 frame;
     SDL_Texture* texture;
 
     SDL_Rect* sheet_rect;
+};
+
+class GUI {
+public:
+    GUI() {
+        this->font = TTF_OpenFont("data/Minecraft.ttf", 24);
+    }
+
+    ~GUI() {
+        TTF_CloseFont(font);
+    }
+
+    void Update() {
+        coins_text.SetText("Coins: "+std::to_string(coins_val));
+    }
+
+    void Render(SDL_Renderer* renderer) {
+        this->coins_text.Render(font, renderer);
+    }
+
+    uint_fast32_t coins_val = 0;
+
+private:
+    TTF_Font* font;
+    
+    Text coins_text {"Coin: ", 20, 20};
 };
 
 void EndGame() {
