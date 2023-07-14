@@ -9,36 +9,47 @@
 #include <windows.h>
 #include <string>
 
-SDL_Surface* zombie_surface = IMG_Load("data/enemy.png");
+SDL_Surface* zombie_normal_surface = IMG_Load("data/zombies/zombie-normal-sheet.png");
+SDL_Surface* zombie_brick_surface = IMG_Load("data/zombies/zombie-bricklayer-sheet.png");
 SDL_Surface* item_surface = IMG_Load("data/items-spritesheet.png");
+
+TTF_Font* font;
 
 struct Text {
 public:
     Text(std::string text, uint_fast16_t x, uint_fast16_t y) {
         t = text;
         
-        r.x = x;
-        r.y = y;
+        r = new SDL_Rect();
+        r->x = x;
+        r->y = y;
     }
 
     ~Text() {
         SDL_FreeSurface(s);
+        SDL_DestroyTexture(txt);
+
+        delete r;
     }
 
     void SetText(std::string text) {
         t = text;
+        TTF_SizeText(font, t.c_str(), &r->w, &r->h);
     }
 
-    void Render(TTF_Font* font, SDL_Renderer* renderer) {
+    void Update(SDL_Renderer* renderer) {
         s = TTF_RenderText_Solid(font, t.c_str(), {255, 255, 255});
-        TTF_SizeText(font, t.c_str(), &r.w, &r.h);
+        txt = SDL_CreateTextureFromSurface(renderer, s);
+    }
 
-        SDL_RenderCopy(renderer, SDL_CreateTextureFromSurface(renderer, s), nullptr, &r);
+    void Render(SDL_Renderer* renderer) {
+        SDL_RenderCopy(renderer, txt, nullptr, r);
     }
 
 private:
+    SDL_Texture* txt;
     SDL_Surface* s;
-    SDL_Rect r;
+    SDL_Rect *r;
     std::string t;
 };
 
@@ -75,8 +86,8 @@ public:
 class Zombie {
 public:
     Zombie() {
-        rect = new SDL_Rect {740, (rand()%490), 90, 90};
-        sheet_rect = new SDL_Rect {0, 0, 16, 16};
+        rect = SDL_Rect {740, (rand()%490), 90, 90};
+        sheet_rect = SDL_Rect {0, 0, 16, 16};
 
         frame = 0;
         index_frame = 0;
@@ -86,41 +97,39 @@ public:
 
     ~Zombie() {
         SDL_DestroyTexture(texture);
-        delete rect;
-        delete sheet_rect;
     }
 
     void LoadTexture(SDL_Renderer* renderer) {
-        texture = SDL_CreateTextureFromSurface(renderer, zombie_surface);
+        texture = SDL_CreateTextureFromSurface(renderer, zombie_normal_surface);
     }
 
     void Update() {
-        this->rect->x -= 1;
+        this->rect.x -= 1;
 
         index_frame++;
         
         if (index_frame > 10) {
             frame++;
-            sheet_rect->x += 16;
+            sheet_rect.x += 16;
             index_frame = 0;
         }
 
         if (frame > 8) {
             frame = 0;
-            sheet_rect->x = 0;
+            sheet_rect.x = 0;
             index_frame = 0;
         }
 
-        if (rect->x < -rect->w)
+        if (rect.x < -rect.w)
             alive = false;
     }
 
     void Render(SDL_Renderer* renderer) {
-        SDL_RenderCopy(renderer, texture, sheet_rect, rect);
+        SDL_RenderCopy(renderer, texture, &sheet_rect, &rect);
     }
 
-    SDL_Rect* rect;
-    SDL_Rect* sheet_rect;
+    SDL_Rect rect;
+    SDL_Rect sheet_rect;
 
     bool alive;
 
@@ -173,10 +182,10 @@ public:
 
     void LoadTexture(SDL_Renderer* renderer) {
         // Player
-        SDL_Surface* surface = IMG_Load("data/player.png");
+        SDL_Surface* surface = IMG_Load("data/players/player-spritesheet.png");
         texture = SDL_CreateTextureFromSurface(renderer, surface);
         
-        // Gun
+        // Guns
         surface = IMG_Load("data/guns-spritesheet.png");
         gun_texture = SDL_CreateTextureFromSurface(renderer, surface);
 
@@ -308,6 +317,9 @@ public:
 
     void Update() {
         rect->y += 1;
+
+        if (rect->y > 580)
+            alive = false;
     }
 
     void Render(SDL_Renderer* renderer) {
@@ -328,30 +340,36 @@ private:
 class GUI {
 public:
     GUI() {
-        this->font = TTF_OpenFont("data/Minecraft.ttf", 24);
+        
     }
 
     ~GUI() {
         TTF_CloseFont(font);
     }
 
-    void Update() {
+    void Update(SDL_Renderer* renderer) {
+        hp_text.SetText("Hp: "+std::to_string(hp_val));
         coins_text.SetText("Coins: "+std::to_string(coins_val));
+
+        hp_text.Update(renderer);
+        coins_text.Update(renderer);
     }
 
     void Render(SDL_Renderer* renderer) {
-        this->coins_text.Render(font, renderer);
+        hp_text.Render(renderer);
+        coins_text.Render(renderer);
     }
 
     uint_fast32_t coins_val = 0;
+    uint_fast32_t hp_val = 100;
 
 private:
-    TTF_Font* font;
-    
-    Text coins_text {"Coin: ", 20, 20};
+    Text hp_text {"Hp: ", 10, 10};
+    Text coins_text {"Coin: ", 10, 30};
 };
 
 void EndGame() {
-    SDL_FreeSurface(zombie_surface);
+    SDL_FreeSurface(zombie_normal_surface);
+    SDL_FreeSurface(zombie_brick_surface);
     SDL_FreeSurface(item_surface);
 }

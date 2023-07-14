@@ -9,10 +9,6 @@ void Shoot(std::vector<Shot*> *shots, float speed, SDL_Rect* rect, Uint8 point_x
     shots->push_back(ns);
 }
 
-void UpdateGui() {
-
-}
-
 int main(int argc, char** argv){
     // Window
     const char* title = "SHOOT NOW SDL VERSION";
@@ -29,8 +25,10 @@ int main(int argc, char** argv){
 
     // GUI
     TTF_Init();
+    font = TTF_OpenFont("data/Minecraft.ttf", 24);
 
     GUI gui;
+    gui.Update(renderer);
 
     // Others...
     SDL_Keycode action_down, action_up;
@@ -119,7 +117,6 @@ int main(int argc, char** argv){
         }
 
         /* Update */
-        gui.Update();
 
         // Timers
         timer_spawner++;
@@ -139,8 +136,11 @@ int main(int argc, char** argv){
         for (int i{0}; i < zombies.size(); ++i) {
             zombies[i]->Update();
 
-            if (SDL_HasIntersection(zombies[i]->rect, player->rect))
+            if (SDL_HasIntersection(&zombies[i]->rect, player->rect)) {
                 zombies[i]->alive = false;
+                gui.hp_val -= 20;
+                gui.Update(renderer);
+            }
 
             if (!zombies[i]->alive) {
                 delete zombies[i];
@@ -153,7 +153,7 @@ int main(int argc, char** argv){
             shots[i]->Update();
 
             for (int z{0}; z < zombies.size(); ++z) {
-                if (SDL_HasIntersection(shots[i]->rect, zombies[z]->rect)) {
+                if (SDL_HasIntersection(shots[i]->rect, &zombies[z]->rect)) {
                     shots[i]->alive = false;
                     zombies[z]->alive = false;
                 }
@@ -172,7 +172,12 @@ int main(int argc, char** argv){
             if (SDL_HasIntersection(items[i]->rect, player->rect)) {
                 items[i]->alive = false;
                 if (items[i]->frame == 0)
-                    gui.coins_val++;
+                    gui.coins_val += 5;
+            
+                else if (items[i]->frame == 1)
+                    gui.hp_val += 20;
+                
+                gui.Update(renderer);
             }
 
             if (!items[i]->alive) {
@@ -219,7 +224,7 @@ int main(int argc, char** argv){
         gui.Render(renderer);
         
         // Debbuug
-        printf("player.shot.x, y %d, %d\r", player->shot_rect->x, player->shot_rect->y);
+        printf("Zombies Size Vector: %d\r", zombies.size());
 
         SDL_RenderPresent(renderer);
         SDL_Delay(16.7);
