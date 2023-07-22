@@ -3,14 +3,21 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
+#include <SDL2/SDL_mixer.h>
 #include <stdio.h>
 #include <vector>
 #include <algorithm>
 #include <windows.h>
+#include <functional>
 #include <string>
 
+/* Zombies Updates: Differents Updates for differents zombies, to improve game fun */
+std::vector<std::function<void(SDL_Rect*, SDL_Rect*, Uint8*, Uint8*, float)>> zom_upt;
+
+SDL_Surface* zombie_funk_surface = IMG_Load("data/zombies/zombie-funk-sheet.png");
 SDL_Surface* zombie_normal_surface = IMG_Load("data/zombies/zombie-normal-sheet.png");
 SDL_Surface* zombie_brick_surface = IMG_Load("data/zombies/zombie-bricklayer-sheet.png");
+
 SDL_Surface* item_surface = IMG_Load("data/items-spritesheet.png");
 
 TTF_Font* font;
@@ -83,59 +90,75 @@ public:
     float speed_shot;
 };
 
+void NormalZombie(SDL_Rect* r, SDL_Rect* sr, Uint8 *f, Uint8 *i, float s) {
+    r->x -= 1;
+
+    *i += 1;
+    
+    if (*i > 10) {
+        *f += 1;
+        sr->x += 16;
+        *i = 0;
+    }
+
+    if (*f > 8) {
+        *f = 0;
+        sr->x = 0;
+        *i = 0;
+    }
+}
+
 class Zombie {
 public:
     Zombie() {
-        rect = SDL_Rect {740, (rand()%490), 90, 90};
-        sheet_rect = SDL_Rect {0, 0, 16, 16};
+        rect = new SDL_Rect {740, (rand()%490), 90, 90};
+        sheet_rect = new SDL_Rect {0, 0, 16, 16};
 
-        frame = 0;
-        index_frame = 0;
+        frame = new Uint8(0);
+        index_frame = new Uint8(8);
 
         alive = true;
+
+        type = 0;
+        upt = zom_upt[type];
     }
 
     ~Zombie() {
         SDL_DestroyTexture(texture);
+
+        delete rect;
+        delete sheet_rect;
+        
+        free(frame);
+        free(index_frame);
     }
 
     void LoadTexture(SDL_Renderer* renderer) {
+
         texture = SDL_CreateTextureFromSurface(renderer, zombie_normal_surface);
     }
 
     void Update() {
-        this->rect.x -= 1;
+        upt(rect, sheet_rect, frame, index_frame, speed);
 
-        index_frame++;
-        
-        if (index_frame > 10) {
-            frame++;
-            sheet_rect.x += 16;
-            index_frame = 0;
-        }
-
-        if (frame > 8) {
-            frame = 0;
-            sheet_rect.x = 0;
-            index_frame = 0;
-        }
-
-        if (rect.x < -rect.w)
-            alive = false;
+        if (rect->x < -rect->w) alive = false;
     }
 
     void Render(SDL_Renderer* renderer) {
-        SDL_RenderCopy(renderer, texture, &sheet_rect, &rect);
+        SDL_RenderCopy(renderer, texture, sheet_rect, rect);
     }
-
-    SDL_Rect rect;
-    SDL_Rect sheet_rect;
 
     bool alive;
 
+    SDL_Rect *rect;
+    SDL_Rect *sheet_rect;
+
 protected:
-    Uint8 frame, index_frame;
+    Uint8 *frame, *index_frame, type;
     SDL_Texture* texture;
+    std::function<void(SDL_Rect*, SDL_Rect*, Uint8*, Uint8*, float)> upt;
+
+    float speed;
 };
 
 class Player {
@@ -368,8 +391,18 @@ private:
     Text coins_text {"Coin: ", 10, 30};
 };
 
+void InitGame() {
+    TTF_Init();
+    font = TTF_OpenFont("data/Minecraft.ttf", 24);
+
+
+    zom_upt.push_back(NormalZombie);
+}
+
 void EndGame() {
+    SDL_FreeSurface(zombie_funk_surface);
     SDL_FreeSurface(zombie_normal_surface);
     SDL_FreeSurface(zombie_brick_surface);
     SDL_FreeSurface(item_surface);
+    TTF_CloseFont(font);
 }

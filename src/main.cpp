@@ -24,9 +24,8 @@ int main(int argc, char** argv){
     SDL_FreeSurface(icon);
 
     // GUI
-    TTF_Init();
-    font = TTF_OpenFont("data/Minecraft.ttf", 24);
-
+    InitGame();
+    
     GUI gui;
     gui.Update(renderer);
 
@@ -136,7 +135,7 @@ int main(int argc, char** argv){
         for (int i{0}; i < zombies.size(); ++i) {
             zombies[i]->Update();
 
-            if (SDL_HasIntersection(&zombies[i]->rect, player->rect)) {
+            if (SDL_HasIntersection(zombies[i]->rect, player->rect)) {
                 zombies[i]->alive = false;
                 gui.hp_val -= 20;
                 gui.Update(renderer);
@@ -153,7 +152,7 @@ int main(int argc, char** argv){
             shots[i]->Update();
 
             for (int z{0}; z < zombies.size(); ++z) {
-                if (SDL_HasIntersection(shots[i]->rect, &zombies[z]->rect)) {
+                if (SDL_HasIntersection(shots[i]->rect, zombies[z]->rect)) {
                     shots[i]->alive = false;
                     zombies[z]->alive = false;
                 }
@@ -210,7 +209,7 @@ int main(int argc, char** argv){
         for (auto zom : zombies) {
             zom->Render(renderer);
         }
-
+        
         for (auto sht : shots) {
             sht->Render(renderer);
         }
@@ -224,7 +223,7 @@ int main(int argc, char** argv){
         gui.Render(renderer);
         
         // Debbuug
-        printf("Zombies Size Vector: %d\r", zombies.size());
+        //printf("Zombies Size Vector: %d\r", zombies.size());
 
         SDL_RenderPresent(renderer);
         SDL_Delay(16.7);
