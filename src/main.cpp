@@ -4,7 +4,7 @@
 #define SCREEN_HEIGHT 580
 
 void Shoot(std::vector<Shot*> *shots, float speed, SDL_Rect* rect, Uint8 point_x, Uint8 point_y, Uint8 w, Uint8 h) {
-    Shot* ns = new Shot(rect->x+point_x, rect->y+point_y, w, h); // 80, 34
+    Shot* ns = new Shot(rect->x+point_x, rect->y+point_y, w, h);
     ns->speed = speed;
     shots->push_back(ns);
 }
@@ -20,11 +20,10 @@ int main(int argc, char** argv){
     
     SDL_SetWindowResizable(window, SDL_TRUE);
     SDL_SetWindowIcon(window, icon);
-
     SDL_FreeSurface(icon);
 
     // GUI
-    InitGame();
+    InitGame(renderer);
     
     GUI gui;
     gui.Update(renderer);
@@ -188,7 +187,6 @@ int main(int argc, char** argv){
         // Timers Conditional
         if (timer_spawner >= 60) {
             Zombie* nz = new Zombie();
-            nz->LoadTexture(renderer);
             zombies.push_back(nz);
             
             timer_spawner = 0;
@@ -196,7 +194,6 @@ int main(int argc, char** argv){
 
         if (timer_items >= 120) {
             Item* item = new Item();
-            item->Load(renderer);
             items.push_back(item);
 
             timer_items = 0;
@@ -223,8 +220,6 @@ int main(int argc, char** argv){
         gui.Render(renderer);
         
         // Debbuug
-        //printf("Zombies Size Vector: %d\r", zombies.size());
-
         SDL_RenderPresent(renderer);
         SDL_Delay(16.7);
     }

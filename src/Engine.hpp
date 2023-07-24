@@ -12,13 +12,13 @@
 #include <string>
 
 /* Zombies Updates: Differents Updates for differents zombies, to improve game fun */
-std::vector<std::function<void(SDL_Rect*, SDL_Rect*, Uint8*, Uint8*, float)>> zom_upt;
+std::vector<std::function<void(SDL_Rect*, SDL_Rect*, Uint8*, Uint8*)>> zom_upt;
+std::vector<SDL_Texture*> zombie_textures;
 
-SDL_Surface* zombie_funk_surface = IMG_Load("data/zombies/zombie-funk-sheet.png");
-SDL_Surface* zombie_normal_surface = IMG_Load("data/zombies/zombie-normal-sheet.png");
-SDL_Surface* zombie_brick_surface = IMG_Load("data/zombies/zombie-bricklayer-sheet.png");
-
-SDL_Surface* item_surface = IMG_Load("data/items-spritesheet.png");
+SDL_Texture* zombie_funk_texture;
+SDL_Texture* zombie_normal_texture;
+SDL_Texture* zombie_brick_texture;
+SDL_Texture* item_texture;
 
 TTF_Font* font;
 
@@ -90,7 +90,7 @@ public:
     float speed_shot;
 };
 
-void NormalZombie(SDL_Rect* r, SDL_Rect* sr, Uint8 *f, Uint8 *i, float s) {
+void NormalZombie(SDL_Rect* r, SDL_Rect* sr, Uint8 *f, Uint8 *i) {
     r->x -= 1;
 
     *i += 1;
@@ -108,6 +108,50 @@ void NormalZombie(SDL_Rect* r, SDL_Rect* sr, Uint8 *f, Uint8 *i, float s) {
     }
 }
 
+void FunkZombie(SDL_Rect* r, SDL_Rect* sr, Uint8 *f, Uint8 *i) {
+    *i += 1;
+
+    if (r->x > 450) {
+        r->x -= 1;
+
+        if (*i > 15) {
+            *f += 1;
+            sr->x += 16;
+            *i = 0;
+        }
+
+        if (*f > 8) {
+            *f = 0;
+            sr->x = 0;
+            *i = 0;
+        }
+    } else {
+        if (*f < 9) { 
+            *f = 9;
+            sr->x = 16*9;
+            *i = 0;
+        }
+
+        if (*i > 30 && !(*f >=14)) {
+            *f += 1;
+            sr->x += 16;
+            *i = 0;
+        }
+        else if (*i > 60 && (*f >= 14))
+        {
+            *f -= 1;
+            sr->x -= 16;
+            *i = 0;
+        }
+
+        if (*f > 14) {
+            *f = 9;
+            sr->x = 16 * (*f);
+            *i = 0;
+        }
+    }
+}
+
 class Zombie {
 public:
     Zombie() {
@@ -119,13 +163,12 @@ public:
 
         alive = true;
 
-        type = 0;
+        type = rand()%3;
         upt = zom_upt[type];
+        texture = zombie_textures[type];
     }
 
     ~Zombie() {
-        SDL_DestroyTexture(texture);
-
         delete rect;
         delete sheet_rect;
         
@@ -133,13 +176,8 @@ public:
         free(index_frame);
     }
 
-    void LoadTexture(SDL_Renderer* renderer) {
-
-        texture = SDL_CreateTextureFromSurface(renderer, zombie_normal_surface);
-    }
-
     void Update() {
-        upt(rect, sheet_rect, frame, index_frame, speed);
+        upt(rect, sheet_rect, frame, index_frame);
 
         if (rect->x < -rect->w) alive = false;
     }
@@ -156,7 +194,7 @@ public:
 protected:
     Uint8 *frame, *index_frame, type;
     SDL_Texture* texture;
-    std::function<void(SDL_Rect*, SDL_Rect*, Uint8*, Uint8*, float)> upt;
+    std::function<void(SDL_Rect*, SDL_Rect*, Uint8*, Uint8*)> upt;
 
     float speed;
 };
@@ -325,6 +363,8 @@ public:
 
         rect = new SDL_Rect {(rand()%692), -48, 48, 48};
         sheet_rect = new SDL_Rect {frame*16, 0, 16, 16};
+
+        texture = item_texture;
     }
 
     ~Item() {
@@ -332,10 +372,6 @@ public:
 
         delete rect;
         delete sheet_rect;
-    }
-
-    void Load(SDL_Renderer* renderer) {
-        texture = SDL_CreateTextureFromSurface(renderer, item_surface);
     }
 
     void Update() {
@@ -391,18 +427,38 @@ private:
     Text coins_text {"Coin: ", 10, 30};
 };
 
-void InitGame() {
+void InitGame(SDL_Renderer* r) {
     TTF_Init();
     font = TTF_OpenFont("data/Minecraft.ttf", 24);
 
+    // Create Textures
+    zombie_funk_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-funk-sheet.png"));
+    zombie_brick_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-bricklayer-sheet.png"));
+    zombie_normal_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-normal-sheet.png"));
+    item_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/items-spritesheet.png"));
 
-    zom_upt.push_back(NormalZombie);
+    // Zombie Textures Load
+    zombie_textures.push_back(zombie_normal_texture);
+    zombie_textures.push_back(zombie_brick_texture);
+    zombie_textures.push_back(zombie_funk_texture);
+    zombie_textures.push_back(item_texture);
+    
+    zom_upt.push_back(NormalZombie); // Normal Zombie
+    zom_upt.push_back(NormalZombie); // Bricklayer
+    zom_upt.push_back(FunkZombie);   // Funkero
 }
 
 void EndGame() {
-    SDL_FreeSurface(zombie_funk_surface);
-    SDL_FreeSurface(zombie_normal_surface);
-    SDL_FreeSurface(zombie_brick_surface);
-    SDL_FreeSurface(item_surface);
+    // Free
+    for (int i{0}; i < zombie_textures.size(); ++i) {
+        SDL_DestroyTexture(zombie_textures[i]);
+    }
+
+    // Free Surface & Textures
+    SDL_DestroyTexture(zombie_funk_texture);
+    SDL_DestroyTexture(zombie_normal_texture);
+    SDL_DestroyTexture(zombie_brick_texture);
+    SDL_DestroyTexture(item_texture);
+
     TTF_CloseFont(font);
 }
