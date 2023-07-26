@@ -12,6 +12,10 @@
 #include <string>
 #include <unordered_map>
 
+enum ZOMBIES {
+    NORMAL, BRICK, FUNK
+};
+
 /* Textures */
 std::vector<SDL_Texture*> zombie_textures;
 
@@ -46,6 +50,7 @@ public:
 
     void Update(SDL_Renderer* renderer) {
         s = TTF_RenderText_Solid(font, t.c_str(), {255, 255, 255});
+        SDL_DestroyTexture(txt);
         txt = SDL_CreateTextureFromSurface(renderer, s);
     }
 
@@ -101,17 +106,17 @@ public:
         if (p) {
             i++;
 
-            if (fr > anim.size()) {
-                fr = 0;
+            if (i > as) {
                 f = anim[fr];
+                fr++;             // To get next point of vector Anim
                 i = 0;
 
                 s->x = f*jmp;
             }
 
-            if (i > as) {
+            if (fr > anim.size()) {
+                fr = 0;
                 f = anim[fr];
-                fr++;             // To get next point of vector Anim
                 i = 0;
 
                 s->x = f*jmp;
@@ -125,7 +130,7 @@ public:
     }
 
     void Stop() {
-
+        p = false;
     }
 
     void CreateAnimation(const char* name, std::vector<int_fast8_t> frames) {
@@ -165,6 +170,10 @@ void NormalZombie(SDL_Rect* r, AnimationManager* a) {
 void FunkZombie(SDL_Rect* r, AnimationManager* a) {
     r->x -= 1;
 
+    if (r->x <= 400) {
+        a->Stop();
+    }
+
     a->Update();
 }
 
@@ -183,7 +192,10 @@ public:
 
         type = rand()%3;
         upt = zom_upt[type];
-        texture = zombie_textures[type];
+
+        if (type == ZOMBIES::FUNK) {
+            animation->CreateAnimation("smoke", {});
+        }
     }
 
     ~Zombie() {
@@ -200,7 +212,7 @@ public:
     }
 
     void Render(SDL_Renderer* renderer) {
-        SDL_RenderCopy(renderer, texture, sheet_rect, rect);
+        SDL_RenderCopy(renderer, zombie_textures[type], sheet_rect, rect);
     }
 
     bool alive;
@@ -212,7 +224,6 @@ protected:
     AnimationManager* animation;
 
     Uint8 type;
-    SDL_Texture* texture;
     std::function<void(SDL_Rect*, AnimationManager*)> upt;
 
     float speed;
@@ -382,13 +393,9 @@ public:
 
         rect = new SDL_Rect {(rand()%692), -48, 48, 48};
         sheet_rect = new SDL_Rect {frame*16, 0, 16, 16};
-
-        texture = item_texture;
     }
 
     ~Item() {
-        SDL_DestroyTexture(texture);
-
         delete rect;
         delete sheet_rect;
     }
@@ -396,12 +403,11 @@ public:
     void Update() {
         rect->y += 1;
 
-        if (rect->y > 580)
-            alive = false;
+        if (rect->y > 580) alive = false;
     }
 
     void Render(SDL_Renderer* renderer) {
-        SDL_RenderCopy(renderer, texture, sheet_rect, rect);
+        SDL_RenderCopy(renderer, item_texture, sheet_rect, rect);
     }
 
     bool alive;
@@ -410,7 +416,6 @@ public:
     Uint8 frame;
 
 private:
-    SDL_Texture* texture;
 
     SDL_Rect* sheet_rect;
 };

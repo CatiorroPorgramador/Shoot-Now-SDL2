@@ -168,12 +168,12 @@ int main(int argc, char** argv){
             items[i]->Update();
 
             if (SDL_HasIntersection(items[i]->rect, player->rect)) {
-                items[i]->alive = false;
                 if (items[i]->frame == 0)
                     gui.coins_val += 5;
             
                 else if (items[i]->frame == 1)
                     gui.hp_val += 20;
+                items[i]->alive = false;
                 
                 gui.Update(renderer);
             }
