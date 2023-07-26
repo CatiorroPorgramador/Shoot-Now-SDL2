@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <functional>
 #include <string>
+#include <unordered_map>
 
 /* Zombies Updates: Differents Updates for differents zombies, to improve game fun */
 std::vector<std::function<void(SDL_Rect*, SDL_Rect*, Uint8*, Uint8*)>> zom_upt;
@@ -88,6 +89,33 @@ public:
     Uint8 max_bullets, delay_shoot, delay_index, x, y, w, h, point_x, point_y; // Points are the shoots points start
     int frame;
     float speed_shot;
+};
+
+struct AnimationManager {
+public:
+    void Update() {
+
+    }
+
+    void Play(const char* name) {
+        anim = name;
+    }
+
+    void Stop() {
+
+    }
+
+    void CreateAnimation(const char* name, std::vector<int_fast8_t> frames) {
+        anims.insert(std::make_pair(name, frames));
+    }
+
+private:
+    bool p = false; // Playing Some Animation
+
+    int_fast8_t f;  // Animation Frame, Index Animation
+    std::string anim;
+
+    std::unordered_map<const char*, std::vector<int_fast8_t>> anims;
 };
 
 void NormalZombie(SDL_Rect* r, SDL_Rect* sr, Uint8 *f, Uint8 *i) {
