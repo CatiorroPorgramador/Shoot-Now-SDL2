@@ -12,8 +12,7 @@
 #include <string>
 #include <unordered_map>
 
-/* Zombies Updates: Differents Updates for differents zombies, to improve game fun */
-std::vector<std::function<void(SDL_Rect*, SDL_Rect*, Uint8*, Uint8*)>> zom_upt;
+/* Textures */
 std::vector<SDL_Texture*> zombie_textures;
 
 SDL_Texture* zombie_funk_texture;
@@ -23,7 +22,7 @@ SDL_Texture* item_texture;
 
 TTF_Font* font;
 
-struct Text {
+class Text {
 public:
     Text(std::string text, uint_fast16_t x, uint_fast16_t y) {
         t = text;
@@ -93,12 +92,36 @@ public:
 
 struct AnimationManager {
 public:
-    void Update() {
+    AnimationManager(SDL_Rect* sheet) {
+        this->s = sheet;
+    }
 
+    void Update() { 
+        
+        if (p) {
+            i++;
+
+            if (fr > anim.size()) {
+                fr = 0;
+                f = anim[fr];
+                i = 0;
+
+                s->x = f*jmp;
+            }
+
+            if (i > as) {
+                f = anim[fr];
+                fr++;             // To get next point of vector Anim
+                i = 0;
+
+                s->x = f*jmp;
+            }
+        }
     }
 
     void Play(const char* name) {
-        anim = name;
+        anim = anims[name];
+        p = true;
     }
 
     void Stop() {
@@ -109,75 +132,40 @@ public:
         anims.insert(std::make_pair(name, frames));
     }
 
+    void SetAnimationSpeed(int_fast16_t speed) {
+        as = speed;
+    }
+
 private:
     bool p = false; // Playing Some Animation
+    int_fast16_t i = 0; // Animation Index
+    int_fast16_t as = 30; // Animation Speed
 
-    int_fast8_t f;  // Animation Frame, Index Animation
-    std::string anim;
+    int_fast8_t f = 0;  // Animation Frame, Index Animation
+    int_fast8_t fr = 0; // Reference Animatoin Frame
+    int_fast8_t jmp = 16; // Size of unique sprite to jump
+    std::vector<int_fast8_t> anim;
 
     std::unordered_map<const char*, std::vector<int_fast8_t>> anims;
+
+    SDL_Rect* s; // Sheet
 };
 
-void NormalZombie(SDL_Rect* r, SDL_Rect* sr, Uint8 *f, Uint8 *i) {
+/* Zombies Updates: Differents Updates for differents zombies, to improve game fun */
+std::vector<std::function<void(SDL_Rect*, AnimationManager*)>> zom_upt;
+
+std::vector<int_fast8_t> walk_animation = {0, 1, 2, 3, 4, 5, 6, 7, 8};
+
+void NormalZombie(SDL_Rect* r, AnimationManager* a) {
     r->x -= 1;
 
-    *i += 1;
-    
-    if (*i > 10) {
-        *f += 1;
-        sr->x += 16;
-        *i = 0;
-    }
-
-    if (*f > 8) {
-        *f = 0;
-        sr->x = 0;
-        *i = 0;
-    }
+    a->Update();
 }
 
-void FunkZombie(SDL_Rect* r, SDL_Rect* sr, Uint8 *f, Uint8 *i) {
-    *i += 1;
+void FunkZombie(SDL_Rect* r, AnimationManager* a) {
+    r->x -= 1;
 
-    if (r->x > 450) {
-        r->x -= 1;
-
-        if (*i > 15) {
-            *f += 1;
-            sr->x += 16;
-            *i = 0;
-        }
-
-        if (*f > 8) {
-            *f = 0;
-            sr->x = 0;
-            *i = 0;
-        }
-    } else {
-        if (*f < 9) { 
-            *f = 9;
-            sr->x = 16*9;
-            *i = 0;
-        }
-
-        if (*i > 30 && !(*f >=14)) {
-            *f += 1;
-            sr->x += 16;
-            *i = 0;
-        }
-        else if (*i > 60 && (*f >= 14))
-        {
-            *f -= 1;
-            sr->x -= 16;
-            *i = 0;
-        }
-
-        if (*f > 14) {
-            *f = 9;
-            sr->x = 16 * (*f);
-            *i = 0;
-        }
-    }
+    a->Update();
 }
 
 class Zombie {
@@ -186,10 +174,12 @@ public:
         rect = new SDL_Rect {740, (rand()%490), 90, 90};
         sheet_rect = new SDL_Rect {0, 0, 16, 16};
 
-        frame = new Uint8(0);
-        index_frame = new Uint8(8);
-
         alive = true;
+
+        animation = new AnimationManager(sheet_rect);
+        animation->CreateAnimation("walk", walk_animation);
+        animation->Play("walk");
+        animation->SetAnimationSpeed(10);
 
         type = rand()%3;
         upt = zom_upt[type];
@@ -199,13 +189,12 @@ public:
     ~Zombie() {
         delete rect;
         delete sheet_rect;
-        
-        free(frame);
-        free(index_frame);
+
+        delete animation;
     }
 
     void Update() {
-        upt(rect, sheet_rect, frame, index_frame);
+        upt(rect, animation);
 
         if (rect->x < -rect->w) alive = false;
     }
@@ -220,9 +209,11 @@ public:
     SDL_Rect *sheet_rect;
 
 protected:
-    Uint8 *frame, *index_frame, type;
+    AnimationManager* animation;
+
+    Uint8 type;
     SDL_Texture* texture;
-    std::function<void(SDL_Rect*, SDL_Rect*, Uint8*, Uint8*)> upt;
+    std::function<void(SDL_Rect*, AnimationManager*)> upt;
 
     float speed;
 };
