@@ -102,11 +102,11 @@ public:
     }
 
     void Update() { 
-        
         if (p) {
             i++;
 
             if (i > as) {
+                finished = true;
                 f = anim[fr];
                 fr++;             // To get next point of vector Anim
                 i = 0;
@@ -114,7 +114,9 @@ public:
                 s->x = f*jmp;
             }
 
-            if (fr > anim.size()) {
+            if (fr > anim.size()) { // Aniamtion Finished
+                finished = true;
+                p = loop; // if loop is true, continue animation 
                 fr = 0;
                 f = anim[fr];
                 i = 0;
@@ -125,8 +127,11 @@ public:
     }
 
     void Play(const char* name) {
-        anim = anims[name];
-        p = true;
+        if (strcmp(this->name.c_str(), name)) {
+            anim = anims[name];
+            p = true;
+            this->name = name;
+        }
     }
 
     void Stop() {
@@ -140,6 +145,11 @@ public:
     void SetAnimationSpeed(int_fast16_t speed) {
         as = speed;
     }
+
+    bool finished = false;
+    bool loop = true;
+
+    std::string name;
 
 private:
     bool p = false; // Playing Some Animation
@@ -157,21 +167,27 @@ private:
 };
 
 /* Zombies Updates: Differents Updates for differents zombies, to improve game fun */
-std::vector<std::function<void(SDL_Rect*, AnimationManager*)>> zom_upt;
+std::vector<std::function<void(SDL_Rect*, AnimationManager*, int*)>> zom_upt;
 
 std::vector<int_fast8_t> walk_animation = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 
-void NormalZombie(SDL_Rect* r, AnimationManager* a) {
+void NormalZombie(SDL_Rect* r, AnimationManager* a, int* state) {
     r->x -= 1;
+    a->Play("walk");
 
     a->Update();
 }
 
-void FunkZombie(SDL_Rect* r, AnimationManager* a) {
-    r->x -= 1;
-
-    if (r->x <= 400) {
+void FunkZombie(SDL_Rect* r, AnimationManager* a, int* state) {
+    if (r->x <= 400 && *state == 0) {
+        printf("ANIMA FIU\n");
+        *state = 1;
         a->Stop();
+        a->Play("smoke");
+
+        a->loop = false;
+    } else {
+        
     }
 
     a->Update();
@@ -185,6 +201,8 @@ public:
 
         alive = true;
 
+        state = new int(0);
+
         animation = new AnimationManager(sheet_rect);
         animation->CreateAnimation("walk", walk_animation);
         animation->Play("walk");
@@ -194,11 +212,13 @@ public:
         upt = zom_upt[type];
 
         if (type == ZOMBIES::FUNK) {
-            animation->CreateAnimation("smoke", {});
+            animation->CreateAnimation("smoke", {9, 10, 11, 12, 13, 14});
         }
     }
 
     ~Zombie() {
+        free(state);
+
         delete rect;
         delete sheet_rect;
 
@@ -206,7 +226,7 @@ public:
     }
 
     void Update() {
-        upt(rect, animation);
+        upt(rect, animation, state);
 
         if (rect->x < -rect->w) alive = false;
     }
@@ -217,6 +237,8 @@ public:
 
     bool alive;
 
+    int* state;
+
     SDL_Rect *rect;
     SDL_Rect *sheet_rect;
 
@@ -224,7 +246,7 @@ protected:
     AnimationManager* animation;
 
     Uint8 type;
-    std::function<void(SDL_Rect*, AnimationManager*)> upt;
+    std::function<void(SDL_Rect*, AnimationManager*, int*)> upt;
 
     float speed;
 };
