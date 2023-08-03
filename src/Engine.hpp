@@ -115,7 +115,7 @@ public:
             }
 
             if (fr > anim.size()) { // Aniamtion Finished
-                finished = true;
+                finished = this->name;
                 p = loop; // if loop is true, continue animation 
                 fr = 0;
                 f = anim[fr];
@@ -127,15 +127,19 @@ public:
     }
 
     void Play(const char* name) {
-        if (strcmp(this->name.c_str(), name)) {
-            anim = anims[name];
+        if (std::string(name) != this->name) {
             p = true;
-            this->name = name;
+            anim = anims[name];
+            this->name = std::string(name);
         }
     }
 
     void Stop() {
+        name = "";
         p = false;
+        i = 0;
+        fr = 0;
+        f = 0;
     }
 
     void CreateAnimation(const char* name, std::vector<int_fast8_t> frames) {
@@ -143,10 +147,10 @@ public:
     }
 
     void SetAnimationSpeed(int_fast16_t speed) {
-        as = speed;
+        if (as != speed) as = speed;
     }
 
-    bool finished = false;
+    std::string finished;
     bool loop = true;
 
     std::string name;
@@ -179,15 +183,32 @@ void NormalZombie(SDL_Rect* r, AnimationManager* a, int* state) {
 }
 
 void FunkZombie(SDL_Rect* r, AnimationManager* a, int* state) {
-    if (r->x <= 400 && *state == 0) {
-        printf("ANIMA FIU\n");
-        *state = 1;
-        a->Stop();
+    
+    if (*state != 2) {
+        if (r->x <= 400 && *state != 1)
+            *state = 1; 
+        
+        if (a->finished == "smoke") {
+            *state = 2;
+        }
+    }
+    
+    if (*state == 1) {
+        a->SetAnimationSpeed(25);
         a->Play("smoke");
 
         a->loop = false;
-    } else {
-        
+    }
+    
+
+    else if (*state == 2) {
+        a->SetAnimationSpeed(5);
+        a->loop = true;
+        a->Play("walk");
+        r->x -= 2;
+    }
+    else {
+        r->x -= 1;
     }
 
     a->Update();
@@ -212,7 +233,7 @@ public:
         upt = zom_upt[type];
 
         if (type == ZOMBIES::FUNK) {
-            animation->CreateAnimation("smoke", {9, 10, 11, 12, 13, 14});
+            animation->CreateAnimation("smoke", {9, 10, 11, 12, 13, 13, 13, 13, 14, 15, 16, 17, 13, 13, 13, 13, 14, 15, 16, 17});
         }
     }
 
