@@ -47,24 +47,29 @@ int main(int argc, char** argv){
     Gun m4("M4", 30, 7, 23, 0, 40, 0);
     m4.SetBulletSize(8, 4);
     m4.SetBulletPosition(80, 49);
+    m4.SetDamage(30);
+
     Gun ak47("Ak-47", 30, 7, 23, 1, 20, 0);
     ak47.SetBulletSize(8, 4);
     ak47.SetBulletPosition(50, 49);
+    
     Gun glock("Glock", 17, 40, 15, 2, 10, 0);
     glock.SetBulletSize(5, 3);
     glock.SetBulletPosition(60, 49);
+    glock.SetDamage(15);
+
     Gun rev_n("Revolver", 6, 60, 13, 3, 10, 0);
     rev_n.SetBulletSize(6, 3);
     Gun rev_c("Canela Seca", 6, 60, 16, 4, 10, 0);
     rev_c.SetBulletSize(5, 3);
 
-    Gun slot_1 = m4;
-    Gun slot_2 = glock;
+    Gun slot[2] = {glock, m4};
+    uint8_t slot_index = 0;
 
     // Objects
     Player *player = new Player();
     player->LoadTexture(renderer);
-    player->ChangeGun(slot_1);
+    player->ChangeGun(slot[0]);
 
     bool running = true;
     while(running){
@@ -93,9 +98,13 @@ int main(int argc, char** argv){
                         if (!player->shooting) timer_shoot = player->gun_time_shoot;
                         player->shooting = true;
                         break;
-                    case SDLK_1: player->ChangeGun(slot_1);
+                    case SDLK_1:
+                        player->ChangeGun(slot[0]);
+                        slot_index = 0;
                         break;
-                    case SDLK_2: player->ChangeGun(slot_2);
+                    case SDLK_2:
+                        player->ChangeGun(slot[1]);
+                        slot_index = 1;
                         break;
                     default:
                         break;
@@ -122,6 +131,7 @@ int main(int argc, char** argv){
 
         // Player
         player->Update(action_down, action_up);
+        player_y = player->rect->y;
 
         if (player->shooting) timer_shoot++;
 
@@ -153,7 +163,7 @@ int main(int argc, char** argv){
             for (int z{0}; z < zombies.size(); ++z) {
                 if (SDL_HasIntersection(shots[i]->rect, zombies[z]->rect)) {
                     shots[i]->alive = false;
-                    zombies[z]->alive = false;
+                    zombies[z]->Hit(slot[slot_index].damage);
                 }
             }
 

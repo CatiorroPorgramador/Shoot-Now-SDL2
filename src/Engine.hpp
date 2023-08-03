@@ -26,6 +26,8 @@ SDL_Texture* item_texture;
 
 TTF_Font* font;
 
+int player_y;
+
 class Text {
 public:
     Text(std::string text, uint_fast16_t x, uint_fast16_t y) {
@@ -89,7 +91,12 @@ public:
         this->point_y = y;
     }
 
+    void SetDamage(int damage) {
+        this->damage = damage;
+    }
+
     char* name;
+    int damage;
     Uint8 max_bullets, delay_shoot, delay_index, x, y, w, h, point_x, point_y; // Points are the shoots points start
     int frame;
     float speed_shot;
@@ -171,19 +178,18 @@ private:
 };
 
 /* Zombies Updates: Differents Updates for differents zombies, to improve game fun */
-std::vector<std::function<void(SDL_Rect*, AnimationManager*, int*)>> zom_upt;
+std::vector<std::function<void(SDL_Rect*, AnimationManager*, int*, int*, int*)>> zom_upt;
 
 std::vector<int_fast8_t> walk_animation = {0, 1, 2, 3, 4, 5, 6, 7, 8};
 
-void NormalZombie(SDL_Rect* r, AnimationManager* a, int* state) {
-    r->x -= 1;
+void NormalZombie(SDL_Rect* r, AnimationManager* a, int* dx, int* dy, int* state) {
+    *dx = -1;
     a->Play("walk");
 
     a->Update();
 }
 
-void FunkZombie(SDL_Rect* r, AnimationManager* a, int* state) {
-    
+void FunkZombie(SDL_Rect* r, AnimationManager* a, int* dx, int* dy, int* state) {
     if (*state != 2) {
         if (r->x <= 400 && *state != 1)
             *state = 1; 
@@ -194,10 +200,11 @@ void FunkZombie(SDL_Rect* r, AnimationManager* a, int* state) {
     }
     
     if (*state == 1) {
-        a->SetAnimationSpeed(25);
+        a->SetAnimationSpeed(15);
         a->Play("smoke");
 
         a->loop = false;
+        *dx = 0;
     }
     
 
@@ -206,9 +213,14 @@ void FunkZombie(SDL_Rect* r, AnimationManager* a, int* state) {
         a->loop = true;
         a->Play("walk");
         r->x -= 2;
+
+        if (r->y > player_y) r->y -= 2;
+        else r->y += 2;
+    } else if (*state == 3) {
+        *dx = 1;
     }
     else {
-        r->x -= 1;
+        *dx = -1;
     }
 
     a->Update();
@@ -223,17 +235,23 @@ public:
         alive = true;
 
         state = new int(0);
+        dx = new int(0);
+        dy = new int (0);
 
         animation = new AnimationManager(sheet_rect);
         animation->CreateAnimation("walk", walk_animation);
         animation->Play("walk");
         animation->SetAnimationSpeed(10);
 
+        hp = 50;
         type = rand()%3;
         upt = zom_upt[type];
 
         if (type == ZOMBIES::FUNK) {
+            hp = 60;
             animation->CreateAnimation("smoke", {9, 10, 11, 12, 13, 13, 13, 13, 14, 15, 16, 17, 13, 13, 13, 13, 14, 15, 16, 17});
+        } else if (type == ZOMBIES::BRICK) {
+            hp = 80;
         }
     }
 
@@ -247,13 +265,21 @@ public:
     }
 
     void Update() {
-        upt(rect, animation, state);
+        upt(rect, animation, dx, dy, state);
 
-        if (rect->x < -rect->w) alive = false;
+        rect->x += *dx;
+        rect->y += *dy;
+
+        if (rect->x < -rect->w || hp <= 0) alive = false;
+
     }
 
     void Render(SDL_Renderer* renderer) {
         SDL_RenderCopy(renderer, zombie_textures[type], sheet_rect, rect);
+    }
+
+    void Hit(int damage) {
+        hp -= damage;
     }
 
     bool alive;
@@ -263,11 +289,14 @@ public:
     SDL_Rect *rect;
     SDL_Rect *sheet_rect;
 
-protected:
-    AnimationManager* animation;
-
+private:
     Uint8 type;
-    std::function<void(SDL_Rect*, AnimationManager*, int*)> upt;
+    int hp;
+    int* dx;
+    int* dy;
+
+    AnimationManager* animation;
+    std::function<void(SDL_Rect*, AnimationManager*, int*, int*, int*)> upt;
 
     float speed;
 };
@@ -275,7 +304,7 @@ protected:
 class Player {
 public:
     Player() {
-        rect = new SDL_Rect {0, 0, 16*4, 16*4};
+        rect = new SDL_Rect {0, (580/2)-(16*4)/2, 16*4, 16*4};
 
         sheet_rect = new SDL_Rect {0, 0, 16, 16};
 
@@ -503,7 +532,6 @@ void InitGame(SDL_Renderer* r) {
     zombie_brick_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-bricklayer-sheet.png"));
     zombie_normal_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-normal-sheet.png"));
     item_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/items-spritesheet.png"));
-
     // Zombie Textures Load
     zombie_textures.push_back(zombie_normal_texture);
     zombie_textures.push_back(zombie_brick_texture);
