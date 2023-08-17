@@ -17,7 +17,7 @@ enum ZOMBIES {
 };
 
 enum CLOTHES {
-    DOLMAN_BODY, DOLMAN_HEAD
+    DOLMAN_BODY, DOLMAN_HEAD, JULIET
 };
 
 /* Textures */
@@ -310,7 +310,7 @@ private:
 class Player {
 public:
     Player() {
-        rect = new SDL_Rect {0, (580/2)-(16*4)/2, 16*4, 16*4};
+        rect = new SDL_Rect {0, (580/2)-(16*4)/2, 16*5, 16*5};
         sheet_rect = new SDL_Rect {0, 0, 16, 16};
         gun_rect = new SDL_Rect {0, 0, 105, 105};
         gun_sheet_rect = new SDL_Rect {0, 0, 32, 32};
@@ -328,6 +328,7 @@ public:
         d_gun[1] = 0;
 
         clothes.push_back(DOLMAN_BODY);
+        clothes.push_back(JULIET);
 
         printf("Player Has Created...\n");
     }
@@ -401,11 +402,11 @@ public:
 
     void Render(SDL_Renderer* renderer) {
         SDL_RenderCopy(renderer, texture, sheet_rect, rect);
-        SDL_RenderCopy(renderer, gun_texture, gun_sheet_rect, gun_rect);
-
         for (int i{0}; i < clothes.size(); ++i) {
             SDL_RenderCopy(renderer, clothes_textures.at(clothes.at(i)), sheet_rect, rect);
         }
+
+        SDL_RenderCopy(renderer, gun_texture, gun_sheet_rect, gun_rect);
     }
 
     SDL_Rect* rect;
@@ -537,6 +538,7 @@ void InitGame(SDL_Renderer* r) {
     // Create Textures
     clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/dolman-body.png")));
     clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/dolman-head.png")));
+    clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/juliet-glasses.png")));
 
     zombie_funk_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-funk-sheet.png"));
     zombie_brick_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-bricklayer-sheet.png"));
