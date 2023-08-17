@@ -18,7 +18,6 @@ int main(int argc, char** argv){
     SDL_Window* window = SDL_CreateWindow(title, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, 0);
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
     
-    SDL_SetWindowResizable(window, SDL_TRUE);
     SDL_SetWindowIcon(window, icon);
     SDL_FreeSurface(icon);
 
@@ -76,7 +75,7 @@ int main(int argc, char** argv){
         // Events
         SDL_Event event;
 
-        while(SDL_PollEvent(&event)){
+        while(SDL_PollEvent(&event)) {
             switch(event.type){
                 case SDL_QUIT:
                     running = false;
@@ -163,7 +162,7 @@ int main(int argc, char** argv){
             for (int z{0}; z < zombies.size(); ++z) {
                 if (SDL_HasIntersection(shots[i]->rect, zombies[z]->rect)) {
                     shots[i]->alive = false;
-                    zombies[z]->Hit(slot[slot_index].damage);
+                    zombies[z]->Hit(slot[slot_index].damage, shots[i]->rect->y);
                 }
             }
 
@@ -242,19 +241,19 @@ int main(int argc, char** argv){
 
     for (int i{0}; i < zombies.size(); ++i) {
         printf("Deleting remaining zombie... number(%d/%d)\r", i+1, zombies.size());
-        delete zombies[i];
+        delete zombies.at(i);
     }
     putchar('\n');
 
     for (int i{0}; i < shots.size(); ++i) {
         printf("Deleting remaining Shots... number(%d/%d)\r", i+1, shots.size());
-        delete shots[i];
+        delete shots.at(i);
     }
     putchar('\n');
 
     for (int i{0}; i < items.size(); ++i) {
         printf("Deleting remaining items... number(%d/%d)\r", i+1, items.size());
-        delete items[i];
+        delete items.at(i);
     }
     putchar('\n');
 

@@ -16,7 +16,13 @@ enum ZOMBIES {
     NORMAL, BRICK, FUNK
 };
 
+enum CLOTHES {
+    DOLMAN_BODY, DOLMAN_HEAD
+};
+
 /* Textures */
+std::vector<SDL_Texture*> clothes_textures;
+
 std::vector<SDL_Texture*> zombie_textures;
 
 SDL_Texture* zombie_funk_texture;
@@ -278,7 +284,7 @@ public:
         SDL_RenderCopy(renderer, zombie_textures[type], sheet_rect, rect);
     }
 
-    void Hit(int damage) {
+    void Hit(int damage, int shot_y) {
         hp -= damage;
     }
 
@@ -305,27 +311,23 @@ class Player {
 public:
     Player() {
         rect = new SDL_Rect {0, (580/2)-(16*4)/2, 16*4, 16*4};
-
         sheet_rect = new SDL_Rect {0, 0, 16, 16};
-
         gun_rect = new SDL_Rect {0, 0, 105, 105};
-
         gun_sheet_rect = new SDL_Rect {0, 0, 32, 32};
-
         shot_rect = new SDL_Rect {0, 0, 0, 0};
-
-        speed = 3;
 
         shooting = false;
         can_shoot = true;
 
         dx = 0;
         dy = 0;
+        speed = 3;
+        frame = 2;
 
         d_gun[0] = 0;
         d_gun[1] = 0;
 
-        frame = 2;
+        clothes.push_back(DOLMAN_BODY);
 
         printf("Player Has Created...\n");
     }
@@ -400,6 +402,10 @@ public:
     void Render(SDL_Renderer* renderer) {
         SDL_RenderCopy(renderer, texture, sheet_rect, rect);
         SDL_RenderCopy(renderer, gun_texture, gun_sheet_rect, gun_rect);
+
+        for (int i{0}; i < clothes.size(); ++i) {
+            SDL_RenderCopy(renderer, clothes_textures.at(clothes.at(i)), sheet_rect, rect);
+        }
     }
 
     SDL_Rect* rect;
@@ -422,6 +428,7 @@ private:
 
     SDL_Texture* texture;
     SDL_Texture* gun_texture;
+    std::vector<unsigned short int> clothes;
 };
 
 class Shot {
@@ -528,10 +535,14 @@ void InitGame(SDL_Renderer* r) {
     font = TTF_OpenFont("data/Minecraft.ttf", 24);
 
     // Create Textures
+    clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/dolman-body.png")));
+    clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/dolman-head.png")));
+
     zombie_funk_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-funk-sheet.png"));
     zombie_brick_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-bricklayer-sheet.png"));
     zombie_normal_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-normal-sheet.png"));
     item_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/items-spritesheet.png"));
+
     // Zombie Textures Load
     zombie_textures.push_back(zombie_normal_texture);
     zombie_textures.push_back(zombie_brick_texture);
@@ -546,7 +557,11 @@ void InitGame(SDL_Renderer* r) {
 void EndGame() {
     // Free
     for (int i{0}; i < zombie_textures.size(); ++i) {
-        SDL_DestroyTexture(zombie_textures[i]);
+        SDL_DestroyTexture(zombie_textures.at(i));
+    }
+
+    for (int i{0}; i < clothes_textures.size(); ++i) {
+        SDL_DestroyTexture(clothes_textures.at(i));
     }
 
     // Free Surface & Textures
@@ -556,4 +571,5 @@ void EndGame() {
     SDL_DestroyTexture(item_texture);
 
     TTF_CloseFont(font);
+    TTF_Quit();
 }
