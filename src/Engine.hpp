@@ -531,6 +531,19 @@ private:
     Text coins_text {"Coin: ", 10, 30};
 };
 
+class Scene {
+public:
+    bool pause;
+
+    SDL_Renderer* renderer;
+    SDL_Keycode action_down, action_up;
+
+    virtual void Init() = 0;
+    virtual void Update() = 0;
+    virtual void Render() = 0;
+protected:
+};
+
 void InitGame(SDL_Renderer* r) {
     TTF_Init();
     font = TTF_OpenFont("data/Minecraft.ttf", 24);
