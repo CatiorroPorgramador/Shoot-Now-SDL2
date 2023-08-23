@@ -107,6 +107,9 @@ public:
     int frame;
     float speed_shot;
 };
+// Weapons
+Gun m4("M4", 30, 7, 23, 0, 40, 0);
+Gun glock("Glock", 17, 40, 15, 2, 10, 0);
 
 struct AnimationManager {
 public:
@@ -372,7 +375,7 @@ public:
         this->point_y = gun.point_y;
     }
 
-    void Update(SDL_Keycode key_dn, SDL_Keycode key_up) {
+    void Update() {
         anim_speed = (in_movement) ? 20 : 60;
         anim_frame = (in_movement) ? 3 : 1;
         
@@ -533,15 +536,227 @@ private:
 
 class Scene {
 public:
+
+virtual ~Scene(){};
+
     bool pause;
 
     SDL_Renderer* renderer;
-    SDL_Keycode action_down, action_up;
 
-    virtual void Init() = 0;
-    virtual void Update() = 0;
-    virtual void Render() = 0;
+    virtual void Init(SDL_Renderer*) {};
+    virtual void InputDown(int) {};
+    virtual void InputUp(int) {};
+    virtual void Update() {};
+    virtual void Render() {};
 protected:
+};
+
+class GamePlay : public Scene {
+public:
+    GamePlay() {}
+    ~GamePlay() {
+        delete player;
+
+        for (int i{0}; i < zombies.size(); ++i) {
+            printf("Deleting remaining zombie... number(%d/%d)\r", i+1, zombies.size());
+            delete zombies.at(i);
+        }
+        putchar('\n');
+
+        for (int i{0}; i < shots.size(); ++i) {
+            printf("Deleting remaining Shots... number(%d/%d)\r", i+1, shots.size());
+            delete shots.at(i);
+        }
+        putchar('\n');
+
+        for (int i{0}; i < items.size(); ++i) {
+            printf("Deleting remaining items... number(%d/%d)\r", i+1, items.size());
+            delete items.at(i);
+        }
+        putchar('\n');
+    }
+
+    void Init(SDL_Renderer* sdl_renderer) {
+        this->renderer = sdl_renderer;
+
+        this->gui.Update(this->renderer);
+        this->timer_spawner = 0;
+        this->timer_shoot = 0;
+        this->timer_items = 0;
+
+        this->player = new Player();
+        this->player->LoadTexture(renderer);
+        this->player->ChangeGun(slot[0]);
+    }
+
+    void InputDown(SDL_KeyCode key_code) {
+        printf("uai so");
+        switch (key_code) {
+            case SDLK_a:
+                player->dx = -player->speed;
+                break;
+            case SDLK_d: player->dx = player->speed;
+                break;
+            case SDLK_w: player->dy = -player->speed;
+                break;
+            case SDLK_s: player->dy = player->speed;
+                break;
+            case SDLK_SPACE:
+                if (!player->shooting) timer_shoot = player->gun_time_shoot;
+                player->shooting = true;
+                break;
+            case SDLK_1:
+                player->ChangeGun(slot[0]);
+                slot_index = 0;
+                break;
+            case SDLK_2:
+                player->ChangeGun(slot[1]);
+                slot_index = 1;
+                break;
+            default:
+                break;
+        }
+    }
+
+    void InputUp(SDL_KeyCode action_up) {
+        if (action_up == SDLK_a || action_up == SDLK_d)     player->dx = 0;
+        if (action_up == SDLK_s || action_up == SDLK_w)     player->dy = 0;
+        if (action_up == SDLK_SPACE)                        player->shooting = false;
+                    
+    }
+
+    void Update() {
+        // Timers
+        this->TimerControl();
+        
+        // Entities
+        player->Update();
+        player_y = player->rect->y;
+        this->CollisionControl();
+    }
+
+    void Render() {
+        for (auto zom : zombies) {
+            zom->Render(renderer);
+        }
+        
+        for (auto sht : shots) {
+            sht->Render(renderer);
+        }
+
+        for (auto itm : items) {
+            itm->Render(renderer);
+        }
+
+        player->Render(renderer);
+
+        gui.Render(renderer);
+    }
+
+private:
+    /* Integers */
+    Uint8 timer_spawner, timer_items, timer_shoot, slot_index;
+
+    /* Groups */
+    std::vector<Zombie*> zombies;
+    std::vector<Shot*> shots;
+    std::vector<Item*> items;
+
+    /* Engine */
+    GUI gui;
+    Gun slot[2] = {glock, m4};
+
+    Player* player;
+
+    /* Others... */
+    void PlayerShoot() {
+        Shot* ns = new Shot(player->rect->x+player->point_x, player->rect->y+player->point_y, player->shot_rect->w, player->shot_rect->h);
+        ns->speed = player->gun_shot_speed;
+        shots.push_back(ns);
+    }
+
+    /* Controls*/
+    void CollisionControl() {
+        /* Zombies */
+        for (int i{0}; i < zombies.size(); ++i) {
+            zombies[i]->Update();
+
+            if (SDL_HasIntersection(zombies[i]->rect, player->rect)) {
+                zombies[i]->alive = false;
+                gui.hp_val -= 20;
+                gui.Update(renderer);
+            }
+
+            if (!zombies[i]->alive) {
+                delete zombies[i];
+                zombies.erase(zombies.begin()+i);
+            }
+        }
+
+        // Shots
+        for (int i{0}; i < shots.size(); ++i) {
+            shots[i]->Update();
+
+            for (int z{0}; z < zombies.size(); ++z) {
+                if (SDL_HasIntersection(shots[i]->rect, zombies[z]->rect)) {
+                    shots[i]->alive = false;
+                    zombies[z]->Hit(slot[slot_index].damage, shots[i]->rect->y);
+                }
+            }
+
+            if (!shots[i]->alive) {
+                delete shots[i];
+                shots.erase(shots.begin()+i);
+            }
+        }
+
+        // Items
+        for (int i{0}; i < items.size(); ++i) {
+            items[i]->Update();
+
+            if (SDL_HasIntersection(items[i]->rect, player->rect)) {
+                if (items[i]->frame == 0)
+                    gui.coins_val += 5;
+            
+                else if (items[i]->frame == 1)
+                    gui.hp_val += 20;
+                items[i]->alive = false;
+                
+                gui.Update(renderer);
+            }
+
+            if (!items[i]->alive) {
+                delete items[i];
+                items.erase(items.begin()+i);
+            }
+        }
+    }
+
+    void TimerControl() {
+        timer_spawner++;
+        timer_items++;
+
+        if (player->shooting) timer_shoot++;
+        
+        if (timer_shoot > player->gun_time_shoot) {
+            PlayerShoot();
+            timer_shoot = 0;
+        }
+
+        if (timer_spawner >= 60) {
+            Zombie* nz = new Zombie();
+            zombies.push_back(nz);
+            
+            timer_spawner = 0;
+        }
+
+        if (timer_items >= 120) {
+            Item* item = new Item();
+            items.push_back(item);
+
+            timer_items = 0;
+        }
+    }
 };
 
 void InitGame(SDL_Renderer* r) {
@@ -567,6 +782,15 @@ void InitGame(SDL_Renderer* r) {
     zom_upt.push_back(NormalZombie); // Normal Zombie
     zom_upt.push_back(NormalZombie); // Bricklayer
     zom_upt.push_back(FunkZombie);   // Funkero
+
+    // Weapons
+    m4.SetBulletSize(8, 4);
+    m4.SetBulletPosition(80, 49);
+    m4.SetDamage(30);
+
+    glock.SetBulletSize(5, 3);
+    glock.SetBulletPosition(60, 49);
+    glock.SetDamage(15);
 }
 
 void EndGame() {
