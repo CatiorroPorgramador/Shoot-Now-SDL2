@@ -537,15 +537,15 @@ private:
 class Scene {
 public:
 
-virtual ~Scene(){};
+    virtual ~Scene(){};
 
     bool pause;
 
     SDL_Renderer* renderer;
 
     virtual void Init(SDL_Renderer*) {};
-    virtual void InputDown(int) {};
-    virtual void InputUp(int) {};
+    virtual void InputDown(SDL_Keycode) {};
+    virtual void InputUp(SDL_Keycode) {};
     virtual void Update() {};
     virtual void Render() {};
 protected:
@@ -589,8 +589,7 @@ public:
         this->player->ChangeGun(slot[0]);
     }
 
-    void InputDown(SDL_KeyCode key_code) {
-        printf("uai so");
+    void InputDown(SDL_Keycode key_code) {
         switch (key_code) {
             case SDLK_a:
                 player->dx = -player->speed;
@@ -618,7 +617,7 @@ public:
         }
     }
 
-    void InputUp(SDL_KeyCode action_up) {
+    void InputUp(SDL_Keycode action_up) {
         if (action_up == SDLK_a || action_up == SDLK_d)     player->dx = 0;
         if (action_up == SDLK_s || action_up == SDLK_w)     player->dy = 0;
         if (action_up == SDLK_SPACE)                        player->shooting = false;
@@ -759,7 +758,63 @@ private:
     }
 };
 
-void InitGame(SDL_Renderer* r) {
+class PlayerEditor : public Scene {
+    PlayerEditor() {}
+    ~PlayerEditor() {
+        SDL_DestroyTexture(head);
+        SDL_DestroyTexture(body);
+        SDL_DestroyTexture(foot);
+
+        delete rect;
+        delete sheet;
+    }
+
+    void Init(SDL_Renderer* sdl_renderer) {
+        this->renderer = sdl_renderer;
+
+        SDL_Surface* s;
+
+        player = SDL_CreateTextureFromSurface(sdl_renderer, s);
+        SDL_FreeSurface(s);
+    }
+
+    void InputDown(SDL_Keycode key) {
+        switch (key)
+        {
+        case SDLK_LEFT:
+            
+            break;
+        case SDLK_RIGHT:
+            /* code */
+            break;
+        
+        default:
+            break;
+        }
+    }
+
+    void InputUp(SDL_Keycode key) {
+
+    }
+
+    void Update() {
+
+    }
+
+    void Render() {
+        SDL_RenderCopy(renderer, player, sheet, rect);
+    }
+private:
+    int clothes_index[3];
+    int cloth_type;
+
+    SDL_Rect *rect, *sheet;
+
+    SDL_Texture *player;
+    SDL_Texture *head, *body, *foot;
+};
+
+void InitGame(SDL_Renderer *r) {
     TTF_Init();
     font = TTF_OpenFont("data/Minecraft.ttf", 24);
 

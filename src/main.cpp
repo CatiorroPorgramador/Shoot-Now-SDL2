@@ -18,8 +18,6 @@ int main(int argc, char** argv){
     InitGame(renderer);
 
     // Game Default Scene
-    void (*InputDown(SDL_Keycode))
-
     Scene* main_scene;
 
     main_scene = new GamePlay();
@@ -45,7 +43,6 @@ int main(int argc, char** argv){
 
                 case SDL_KEYUP:
                     main_scene->InputUp(event.key.keysym.sym);
-                    
                     break;
                 default:
                     break;
