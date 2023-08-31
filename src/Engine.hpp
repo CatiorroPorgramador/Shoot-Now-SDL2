@@ -30,6 +30,8 @@ SDL_Texture* zombie_normal_texture;
 SDL_Texture* zombie_brick_texture;
 SDL_Texture* item_texture;
 
+SDL_Texture *arrow_texture;
+
 TTF_Font* font;
 
 int player_y;
@@ -759,20 +761,38 @@ private:
 };
 
 class PlayerEditor : public Scene {
+public:
     PlayerEditor() {}
     ~PlayerEditor() {
         SDL_DestroyTexture(head);
         SDL_DestroyTexture(body);
         SDL_DestroyTexture(foot);
+        SDL_DestroyTexture(player);
 
         delete rect;
         delete sheet;
+
+        delete arrow_rect_r;
+        delete arrow_sheet_r;
+
+        delete arrow_rect_l;
+        delete arrow_sheet_l;
     }
 
     void Init(SDL_Renderer* sdl_renderer) {
         this->renderer = sdl_renderer;
 
+        rect = new SDL_Rect{(740/2)-75, 300, 150, 150};
+        sheet = new SDL_Rect{0, 0, 16, 16};
+
+        arrow_rect_r = new SDL_Rect{200, 280, 64, 64};
+        arrow_sheet_r = new SDL_Rect{0, 0, 16, 16};
+
+        arrow_rect_l = new SDL_Rect{500, 280, 64, 64};
+        arrow_sheet_l = new SDL_Rect{32, 0, 16, 16};
+
         SDL_Surface* s;
+        s = IMG_Load("data/players/player-spritesheet.png");
 
         player = SDL_CreateTextureFromSurface(sdl_renderer, s);
         SDL_FreeSurface(s);
@@ -782,10 +802,8 @@ class PlayerEditor : public Scene {
         switch (key)
         {
         case SDLK_LEFT:
-            
             break;
         case SDLK_RIGHT:
-            /* code */
             break;
         
         default:
@@ -802,6 +820,8 @@ class PlayerEditor : public Scene {
     }
 
     void Render() {
+        SDL_RenderCopy(renderer, arrow_texture, arrow_sheet_r, arrow_rect_r);
+        SDL_RenderCopy(renderer, arrow_texture, arrow_sheet_l, arrow_rect_l);
         SDL_RenderCopy(renderer, player, sheet, rect);
     }
 private:
@@ -809,6 +829,9 @@ private:
     int cloth_type;
 
     SDL_Rect *rect, *sheet;
+    
+    SDL_Rect *arrow_rect_r, *arrow_sheet_r;
+    SDL_Rect *arrow_rect_l, *arrow_sheet_l;
 
     SDL_Texture *player;
     SDL_Texture *head, *body, *foot;
@@ -843,6 +866,9 @@ void InitGame(SDL_Renderer *r) {
     m4.SetBulletPosition(80, 49);
     m4.SetDamage(30);
 
+    // Ui
+    arrow_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/ui/arrow.png"));
+
     glock.SetBulletSize(5, 3);
     glock.SetBulletPosition(60, 49);
     glock.SetDamage(15);
@@ -863,6 +889,7 @@ void EndGame() {
     SDL_DestroyTexture(zombie_normal_texture);
     SDL_DestroyTexture(zombie_brick_texture);
     SDL_DestroyTexture(item_texture);
+    SDL_DestroyTexture(arrow_texture);
 
     TTF_CloseFont(font);
     TTF_Quit();
