@@ -20,7 +20,7 @@ int main(int argc, char** argv){
     // Game Default Scene
     Scene* main_scene;
 
-    main_scene = new GamePlay();
+    main_scene = new PlayerEditor();
     main_scene->Init(renderer);
 
     // Others...
@@ -30,19 +30,25 @@ int main(int argc, char** argv){
     while(running){
         // Events
         SDL_Event event;
+        SDL_GetMouseState(&main_scene->mouse_x, &main_scene->mouse_y);
 
         while(SDL_PollEvent(&event)) {
             switch(event.type){
                 case SDL_QUIT:
                     running = false;
                     break;
-
                 case SDL_KEYDOWN:
                     main_scene->InputDown(event.key.keysym.sym);
                     break;
 
                 case SDL_KEYUP:
                     main_scene->InputUp(event.key.keysym.sym);
+                    break;
+                case SDL_MOUSEBUTTONDOWN:
+                    main_scene->MouseDown(event.button);
+                    break;
+                case SDL_MOUSEBUTTONUP:
+                    main_scene->MouseUp(event.button);
                     break;
                 default:
                     break;

@@ -22,6 +22,7 @@ enum CLOTHES {
 
 /* Textures */
 std::vector<SDL_Texture*> clothes_textures;
+std::vector<int> head_pointer, body_pointer, foot_pointer;
 
 std::vector<SDL_Texture*> zombie_textures;
 
@@ -538,16 +539,18 @@ private:
 
 class Scene {
 public:
-
     virtual ~Scene(){};
 
     bool pause;
 
     SDL_Renderer* renderer;
+    int mouse_x, mouse_y;
 
     virtual void Init(SDL_Renderer*) {};
     virtual void InputDown(SDL_Keycode) {};
     virtual void InputUp(SDL_Keycode) {};
+    virtual void MouseDown(SDL_MouseButtonEvent) {};
+    virtual void MouseUp(SDL_MouseButtonEvent) {};
     virtual void Update() {};
     virtual void Render() {};
 protected:
@@ -785,11 +788,11 @@ public:
         rect = new SDL_Rect{(740/2)-75, 300, 150, 150};
         sheet = new SDL_Rect{0, 0, 16, 16};
 
-        arrow_rect_r = new SDL_Rect{200, 280, 64, 64};
-        arrow_sheet_r = new SDL_Rect{0, 0, 16, 16};
+        arrow_rect_r = new SDL_Rect{560, 280, 64, 64};
+        arrow_sheet_r = new SDL_Rect{32, 0, 16, 16};
 
-        arrow_rect_l = new SDL_Rect{500, 280, 64, 64};
-        arrow_sheet_l = new SDL_Rect{32, 0, 16, 16};
+        arrow_rect_l = new SDL_Rect{150, 280, 64, 64};
+        arrow_sheet_l = new SDL_Rect{0, 0, 16, 16};
 
         SDL_Surface* s;
         s = IMG_Load("data/players/player-spritesheet.png");
@@ -815,6 +818,29 @@ public:
 
     }
 
+    void MouseDown(SDL_MouseButtonEvent e) {
+        if (e.button == SDL_BUTTON_LEFT) {
+            SDL_Rect mouse = {this->mouse_x, this->mouse_y, 1, 1};
+            if (SDL_HasIntersection(arrow_rect_l, &mouse)) {
+                arrow_sheet_l->x = 16;
+                head_idx--;
+                UpdateClothes();
+            }
+
+            if (SDL_HasIntersection(arrow_rect_r, &mouse)) {
+                arrow_sheet_r->x = 48;
+                head_idx++;
+                UpdateClothes();
+            }
+
+        }
+    }
+
+    void MouseUp(SDL_MouseButtonEvent e) {
+        arrow_sheet_l->x = 0;
+        arrow_sheet_r->x = 32;
+    }
+
     void Update() {
 
     }
@@ -822,12 +848,18 @@ public:
     void Render() {
         SDL_RenderCopy(renderer, arrow_texture, arrow_sheet_r, arrow_rect_r);
         SDL_RenderCopy(renderer, arrow_texture, arrow_sheet_l, arrow_rect_l);
+        
         SDL_RenderCopy(renderer, player, sheet, rect);
+        SDL_RenderCopy(renderer, head, sheet, rect);
     }
-private:
-    int clothes_index[3];
-    int cloth_type;
 
+    void UpdateClothes() {
+        if (head_idx == -1) head = NULL;
+        else head = clothes_textures.at(head_pointer.at(head_idx));
+    }
+
+private:
+    int head_idx = -1, body_idx = 0, foot_idx = 0;
     SDL_Rect *rect, *sheet;
     
     SDL_Rect *arrow_rect_r, *arrow_sheet_r;
@@ -845,6 +877,8 @@ void InitGame(SDL_Renderer *r) {
     clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/dolman-body.png")));
     clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/dolman-head.png")));
     clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/juliet-glasses.png")));
+
+    head_pointer = {1};
 
     zombie_funk_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-funk-sheet.png"));
     zombie_brick_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-bricklayer-sheet.png"));
