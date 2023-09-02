@@ -775,8 +775,8 @@ public:
         delete rect;
         delete sheet;
 
-        delete arrow_rect_r;
-        delete arrow_sheet_r;
+        delete arrow_rect_r_head;
+        delete arrow_sheet_r_head;
 
         delete arrow_rect_l;
         delete arrow_sheet_l;
@@ -788,8 +788,8 @@ public:
         rect = new SDL_Rect{(740/2)-75, 300, 150, 150};
         sheet = new SDL_Rect{0, 0, 16, 16};
 
-        arrow_rect_r = new SDL_Rect{560, 280, 64, 64};
-        arrow_sheet_r = new SDL_Rect{32, 0, 16, 16};
+        arrow_rect_r_head = new SDL_Rect{560, 280, 64, 64};
+        arrow_sheet_r_head = new SDL_Rect{32, 0, 16, 16};
 
         arrow_rect_l = new SDL_Rect{150, 280, 64, 64};
         arrow_sheet_l = new SDL_Rect{0, 0, 16, 16};
@@ -827,8 +827,8 @@ public:
                 UpdateClothes();
             }
 
-            if (SDL_HasIntersection(arrow_rect_r, &mouse)) {
-                arrow_sheet_r->x = 48;
+            if (SDL_HasIntersection(arrow_rect_r_head, &mouse)) {
+                arrow_sheet_r_head->x = 48;
                 head_idx++;
                 UpdateClothes();
             }
@@ -838,7 +838,7 @@ public:
 
     void MouseUp(SDL_MouseButtonEvent e) {
         arrow_sheet_l->x = 0;
-        arrow_sheet_r->x = 32;
+        arrow_sheet_r_head->x = 32;
     }
 
     void Update() {
@@ -846,7 +846,7 @@ public:
     }
 
     void Render() {
-        SDL_RenderCopy(renderer, arrow_texture, arrow_sheet_r, arrow_rect_r);
+        SDL_RenderCopy(renderer, arrow_texture, arrow_sheet_r_head, arrow_rect_r_head);
         SDL_RenderCopy(renderer, arrow_texture, arrow_sheet_l, arrow_rect_l);
         
         SDL_RenderCopy(renderer, player, sheet, rect);
@@ -854,6 +854,11 @@ public:
     }
 
     void UpdateClothes() {
+        if (head_idx < -1)
+            head_idx = -1;
+        else if (head_idx > head_pointer.size()-1)
+            head_idx--;
+
         if (head_idx == -1) head = NULL;
         else head = clothes_textures.at(head_pointer.at(head_idx));
     }
@@ -862,7 +867,7 @@ private:
     int head_idx = -1, body_idx = 0, foot_idx = 0;
     SDL_Rect *rect, *sheet;
     
-    SDL_Rect *arrow_rect_r, *arrow_sheet_r;
+    SDL_Rect *arrow_rect_r_head, *arrow_sheet_r_head;
     SDL_Rect *arrow_rect_l, *arrow_sheet_l;
 
     SDL_Texture *player;
@@ -874,11 +879,14 @@ void InitGame(SDL_Renderer *r) {
     font = TTF_OpenFont("data/Minecraft.ttf", 24);
 
     // Create Textures
-    clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/dolman-body.png")));
     clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/dolman-head.png")));
+    clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/funk-hat.png")));
+    clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/bricklayer-head.png")));
+
+    clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/dolman-body.png")));
     clothes_textures.push_back(SDL_CreateTextureFromSurface(r, IMG_Load("data/players/clothes/juliet-glasses.png")));
 
-    head_pointer = {1};
+    head_pointer = {0, 1, 2};
 
     zombie_funk_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-funk-sheet.png"));
     zombie_brick_texture = SDL_CreateTextureFromSurface(r, IMG_Load("data/zombies/zombie-bricklayer-sheet.png"));
