@@ -874,6 +874,25 @@ private:
     SDL_Texture *head, *body, *foot;
 };
 
+class MainMenu : public Scene {
+public:
+    MainMenu() {}
+    ~MainMenu() {
+
+    }
+
+    void Init(SDL_Renderer* sdl_renderer) {
+        this->renderer = sdl_renderer;
+    };
+
+    void MouseDown(SDL_MouseButtonEvent) {};
+    void MouseUp(SDL_MouseButtonEvent) {};
+    void Update() {};
+    void Render() {};
+private:
+};
+
+
 void InitGame(SDL_Renderer *r) {
     TTF_Init();
     font = TTF_OpenFont("data/Minecraft.ttf", 24);

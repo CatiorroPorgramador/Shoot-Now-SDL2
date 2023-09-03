@@ -20,7 +20,7 @@ int main(int argc, char** argv){
     // Game Default Scene
     Scene* main_scene;
 
-    main_scene = new PlayerEditor();
+    main_scene = new GamePlay();
     main_scene->Init(renderer);
 
     // Others...
